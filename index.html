@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logo</title>
+    <title>Splunge.foo. Serving something useful</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500&700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@1,700&display=swap');
     </style>
     <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+            margin: 2em;
             background-color: #f0f0f0;
+            font-family: 'Josefin Sans',sans-serif;
+            font-weight:500;
+            font-style: normal;
+
         }
 
         .logo-container {
             position: relative;
             display: inline-block;
             background-color: white;
-            padding: 10px 20px;
-            box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.2);
+            padding: 1vw 2vw;
+            box-shadow: 0.8vw 0.8vw 0 rgba(0, 0, 0, 0.2);
         }
 
         .logo-container::after {
@@ -41,16 +42,17 @@
         .logo-text {
             font-family: 'Josefin Sans','Arial', sans-serif;
             font-weight: 900;
-            font-size: 36px;
+            font-style: italic;
+            font-size: 7vw;
             font-kerning: normal;
-            letter-spacing: -2px;
-            margin: 0 0 -4px 0;
+            letter-spacing: -0.4vw;
+            margin: 0 0 -1.3vw 0;
         }
 
         .logo-slogan {
             font-family: 'Arial', sans-serif;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 1vw;
             letter-spacing: -0.5px;
             margin: 0;
         }
@@ -60,12 +62,99 @@
             background-color: black;
             margin: 5px 0;
         }
+
+        #items-container {
+            display:flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            column-gap: 2em;
+        }
+        #items-container > div {
+            width:30%;
+            text-align: center;
+            min-width:17em;
+            max-width:25em;
+            margin-bottom: 2em;
+            flex-grow: 1;
+            flex-shrink: 1;
+        }
+        #logo-flange {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 3em;
+        }
+        .element-title {
+            font-weight:700;
+            font-size: 150%;
+            margin-bottom: 0.5em;
+        }
+        .element-description {
+            color: #4f4f4f;
+            text-align: justify;
+        }
+        .element-description a {
+            color: #4f4f4f;
+            text-decoration: none;
+        }
+
+        .element-description a:hover {
+            color: #c22a2a;
+        }
+
+        .element-title a {
+            color:black;
+            text-decoration: none;
+        }
+
+        .element-title a:hover {
+            color: #be3030;
+        }
+
+        #footer {
+            font-size:80%;
+            text-align: center;
+            color:#aaaaaa;
+        }
+
     </style>
 </head>
 <body>
-<div class="logo-container">
-    <div class="logo-text"><span>SP</span><span style="letter-spacing:-4px">LU</span><span style="letter-spacing:-3px">NGE</span>.FOO</div>
-    <div class="logo-slogan">SERVING SOMETHING USEFUL</div>
+<div id="logo-flange">
+    <div class="logo-container">
+        <div class="logo-text"><span>SP</span><span style="letter-spacing:-0.7vw">LU</span>N<span style="letter-spacing:-0.4vw">GE</span><span style="letter-spacing:-0.2vw">.</span>FOO</div>
+        <div class="logo-slogan">SERVING SOMETHING USEFUL</div>
+    </div>
 </div>
+<div id="items-container">
+    <div>
+        <div class="element-title">Coming Soon:<br/>Programmer's Calculator</div>
+        <div class="element-description">
+            A programmers / hex / binary / engineering calculator designed for low level programmers or for people reverse engineering data.
+        </div>
+    </div>
+    <div>
+        <div class="element-title"><a href="/urlstudio" target="_blank">URL Studio</div>
+        <div class="element-description">
+            An app for examining, manipulating, building and exporting URLs and data from URLs.
+        </a></div>
+    </div>
+    <div><div class="element-title"><a href="/zenexplorer" target="_blank">Zen Explorer</div>
+        <div class="element-description">
+            An app to explore binary data stored in Roland ZenCore sound files, MC-707/101 projects and Fantom scenes.
+        </a></div>
+    </div>
+    <div><div class="element-title"><a href="https://github.com/DrKnackerator/RolandZenDecodeXML" target="_blank">Roland<wbr />Zen<wbr />Decode<wbr />XML</a></div>
+        <div class="element-description"><a href="https://github.com/DrKnackerator/RolandZenDecodeXML" target="_blank">
+            A tool to decode Roland editor XML files (initially Jupiter X/Xm and ZenCore) and generate JSON and a Javascript module with byte offsets (for files) and SYSEX locations/length, with plain text and HTML output tables for easy reading.
+        </a></div>
+    </div>
+    <div><div class="element-title"><a href='/rolandsysex' target="blank">Roland MIDI SYESEX Generator</a></div>
+        <div class="element-description"><a href='/rolandsysex' target="blank">
+            An app to generate sysex data streams you can send to your synths.
+        </a></div>
+    </div>
+</div>
+<div id="footer">Questions? Norman awaits your communication.</div>
 </body>
 </html>
