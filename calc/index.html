@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex/Binary/Programmer's Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display:wght@500=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display:wght@700=swap');
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="https://golden-layout.com/files/latest/js/goldenlayout.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-base.css"/>
+    <link type="text/css" rel="stylesheet"
+          href="https://golden-layout.com/files/latest/css/goldenlayout-dark-theme.css"/>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+
+    <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+    
+</head>
+<style>
+    body, html {
+    / / height: 100 %;
+    / / margin: 0;
+    / / padding: 0;
+    }
+
+    body {
+        position: relative;
+    }
+    .xterm .xterm-viewport {
+        overflow-y: auto;
+    }
+
+    .cwrapper {
+        height:100%;
+        position:relative;
+        margin:4px;
+        box-sizing: border-box;
+    }
+    .cparent {
+        flex-grow:1;
+        flex-shrink: 1;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+    #calc-parent{
+        bottom: 2em;
+    }
+    .xt {
+        height:100%;
+    }
+    #inputDiv {
+        font-family: "Noto Sans Mono",Helvitica,Arial,sans-serif;
+        flex-grow:0;
+        flex-shrink: 0;
+        position:absolute;
+        bottom:6px;
+        box-sizing: border-box;
+        background:white;
+        display:flex;
+        width:100%;
+        vertical-align: middle;
+        margin:0;
+        background-color:transparent;
+        padding: 2px 0 0 5px;
+        font-size: 15px;
+    }
+    #mode {
+        display:inline-block;
+        position:relative;
+        font-size:15px;
+        background-color: #ffff9c;
+        font-weight: bold;
+        padding-left: 4px;
+    }
+    #readline {
+        flex-grow: 1;
+        font-family: "Noto Sans Mono",Helvitica,Arial,sans-serif;
+        display:inline-block;
+        padding-right:4px;
+        border: 0 !important;
+        font-size:15px;
+    }
+    #readline:active, #readline:focus {
+        border:0 !important;
+        outline:none !important;
+    }
+    #help-document {
+        display:none;
+        background:white;
+        color:black;
+        height:100%;
+        padding:0.5rem;
+        font-family: Tahoma,Helvitica,swiss,sans-serif;
+        overflow-y:auto;
+    }
+
+    #inner {
+        font-size:90%;
+        padding-bottom: 2em;
+
+    }
+    #inner h1 {
+        margin: 0 0 .5em 0;
+        font-size: 1.5em;
+    }
+    #inner p {
+        margin-block-start: 0.5em;
+        margin-block-end: 0.5em;
+    }
+
+    #preload {
+        font-family: "Noto Sans Mono",Helvitica,Arial,sans-serif;
+        position: relative;
+        z-index: 50;
+        font-size: 1px;
+    }
+    #help-document code {
+        font-family: "Noto Sans Mono",Helvitica,Arial,sans-serif;
+        font-weight:bold;
+        color:#0000ff;
+    }
+    th,td {
+        text-align: left;
+    }
+    th {
+        text-decoration: underline;
+    }
+
+</style>
+<body>
+<div id="preload">a<b>b</b></div>
+<div id="help-document">
+    <div id="inner">
+        <h1>"Programmer's"/Hex/Binary Calculator by <a href="https://splunge.foo" target="blank">Splunge.foo</a> <small>Build 1</small></h1>
+        <p>A command line style calculator. Use <code>?</code> as a command to restore this panel.</p>
+        <p>There is no operator precedence. Operations run left to right.</p>
+        <p>The default input mode (decimal,hex,octal,binary) as shown in the prompt is how literal values are treated. Enter <code>d</code>/<code>x</code>/<code>o</code>/<code>b</code> as a command to switch modes.</p>
+        <p>Literal values can be prefixed with <code>d</code>/<code>x</code>/<code>o</code>/<code>b</code> or <code>0d</code>/<code>0x</code>/<code>0o</code>/<code>0b</code> to change the radix for that value only.</p>
+        <p>The previous result is implicit on the command line (like a calculator). So just entering <code>+5</code> will add 5 to the last result just like a calculator. Only special thing,
+            that does not work for negative literals at the start of the string as we can't tell if you mean to subtract from the current value, or enter a
+            new negative literal. So if a negative value is at the start of the string you need to <code>p - &lt;value&gt;</code> to subtract from the last value.</p>
+        <p>Previous values sit in stack and can be accessed with <code>p&lt;n&gt;</code> with n defaulting to 0 if omitted. The same for accessing memories, <code>m&lt;n&gt;</code>.</p>
+        <p>Memories: <code>m&lt;n&gt;s</code> = set value. <code>m&lt;n&gt;c</code> = clear value. <code>m&lt;n&gt;&lt;op&gt;</code> to apply operation.</p>
+        <p>Memories can be named with every command except clear <code>m&lt;n&gt;&lt;op&gt;&quot;your description&quot;</code> </p>
+        <table>
+            <tr><th>Operator</th><th>Notes</th></tr>
+            <tr><td>+ - * / %</td><td>Standard arithmetic. Divide will also show the modulo.</td></tr>
+            <tr><td>& | ^</td><td>Bitwise AND, OR, XOR.</td></tr>
+            <tr><td>&lt;&lt; &gt;&gt;</td><td>Arithmetic shift left/right. Right shift preserves top bit. Right hand value is number of bits, except when used on memory i.e. <code>5 m1&gt;&gt;</code> to shift memory 1 right by 5 bits. This is currently working on the whole value, TODO is a method to limit calculations to a specified number of bits.</td></tr>
+            <tr><td>&gt;&gt;&gt;</td><td>Logical shift right. Top bit is set to 0. Not currently implemented.</td></tr>
+            <tr><td>! ~</td><td>Bitwise NOT &amp; NEGATE. These do not need a right hand side number. Not currently supported on memories.</td></tr>
+        </table>
+        <p>Unfortunately to copy at the moment you need to select then right-click copy.</p>
+        <p>In the results output, if the value overflows the number of indicated bits (i.e. u16), then the label will be red.</p>
+        <p>Todo</p>
+        <ul>
+            <li>ASL (&gt;&gt;&gt;).</li>
+            <li>Changeable precision.</li>
+            <li>Save/Load current state.</li>
+            <li>l10n.</li>
+            <li>Better copy. Clickable values.</li>
+            <li>Configurable results output.</li>
+        </ul>
+    </div>
+</div>
+<script src="calc.js"></script>
+</body>
+</html>
