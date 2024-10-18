@@ -14,8 +14,8 @@
   <!-- Custom CSS (from src directory) -->
 
   <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-  <script type="module" crossorigin src="./assets/index-CQDHPCQ7.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CygZfhxJ.css">
+  <script type="module" crossorigin src="./assets/index-SCkoNNms.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DGA4TERF.css">
 </head>
 
 <body>
@@ -38,13 +38,17 @@
         <li class="nav-item mcTab" role="presentation">
           <button class="nav-link" id="instrument-tab" data-bs-toggle="tab" data-bs-target="#instrument" type="button" role="tab" aria-controls="instrument" aria-selected="false">Instrument</button>
         </li>
+        <li class="nav-item mcTab" role="presentation">
+          <button class="nav-link" id="samples-tab" data-bs-toggle="tab" data-bs-target="#samples" type="button" role="tab" aria-controls="samples" aria-selected="false">Samples</button>
+        </li>
+
       </ul>
     </div>
   </nav>
 
   <div class="tab-content p-3" id="myTabContent">
     <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab" style="font-weight:500">
-      <h1 style="text-align:center">Zencore/MC101/MC707 File Editor Build 3</h1>
+      <h1 style="text-align:center">Zencore/MC101/MC707 File Editor Build 4</h1>
       <div class="" style="margin-left: auto;margin-right:auto;max-width:40rem">
         <p>Created by <a href="https://splunge.foo" target="_blank">Splunge.foo</a>. Discussion/support at <a href="https://discord.gg/7tbkX7rAGQ" target="_blank">Discord.</a></p>
         <p><b style="color:red">This code is still experimental. Do not overwrite and lose your original files!</b></p>
@@ -59,6 +63,10 @@
         </div>
           <h3>Changelog</h3>
         <div class="changelog">
+          <div class="bn">Build 4</div>
+          <ul>
+            <li>Added Sample tab.</li>
+          </ul>
           <div class="bn">Build 3</div>
           <ul>
             <li>Added instrument/kit name editing.</li>
@@ -108,6 +116,7 @@
         </table>
       </div>
     </div>
+
     <div class="tab-pane fade" id="instrument" role="tabpanel" aria-labelledby="instrument-tab">
       <div class="">
         <table class="table table-bordered clipList" data-source="instruments">
@@ -129,6 +138,32 @@
         </table>
       </div>
     </div>
+
+    <div class="tab-pane fade " id="samples" role="tabpanel" aria-labelledby="samples-tab">
+      <div class="">
+        <table id="sampleTable" class="table" style="width:25rem; margin-left: auto;margin-right:auto;">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Samples</th>
+            <th>Rate</th>
+            <th>Channels</th>
+            <th>Size</th>
+            <th>Play Mode</th>
+            <th>Volume</th>
+            <th>Tune</th>
+            <th>Gain</th>
+            <th>Org Key</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Loop</th>
+          </tr>
+          <tbody id="samplesBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
