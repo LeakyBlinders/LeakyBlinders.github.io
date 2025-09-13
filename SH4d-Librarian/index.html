@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; connect-src ws://localhost:5173 'self' https://splungefoo.goatcounter.com/count; img-src  'self' 'unsafe-inline' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+
+  <title>Roland SH-4d Project Librarian</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- Custom CSS (from src directory) -->
+
+  <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  <script type="module" crossorigin src="./assets/index-DeQw4LLI.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-MqE6KhNt.css">
+</head>
+
+<body>
+<div class="content">
+  <header>
+    <h1>Roland SH-4d Librarian</h1>
+    <button class="btn btn-outline-secondary btn-sm" id="aboutBtn" data-bs-toggle="modal" data-bs-target="#aboutModal">About...</button>
+  </header>
+  <nav id="mainTab" class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container-fluid">
+      <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="project-tab" data-bs-toggle="tab" data-bs-target="#project" type="button" role="tab" aria-controls="project" aria-selected="true">Project Files</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="patterns-tab" data-bs-toggle="tab" data-bs-target="#patterns" type="button" role="tab" aria-controls="patterns" aria-selected="false">Patterns</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="patches-tab" data-bs-toggle="tab" data-bs-target="#patches" type="button" role="tab" aria-controls="patches" aria-selected="false">Patches</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="drums-tab" data-bs-toggle="tab" data-bs-target="#drums" type="button" role="tab" aria-controls="drums" aria-selected="false">Drumkits</button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="tab-content p-3" id="myTabContent">
+    <div class="tab-pane fade show active" id="project" role="tabpanel" aria-labelledby="project-tab">
+      <!-- Warning Box -->
+      <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+          <div class="alert alert-warning text-center" role="alert">
+            <h4 class="alert-heading">⚠️ Warning: This code is experimental!</h4>
+            <p class="mb-0">Do not overwrite and lose your original files! All processing is done locally - none of your files are uploaded to a server.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- File Areas - Centered -->
+      <div class="row justify-content-center">
+        <div class="col-auto">
+          <div class="card" style="width: 450px;">
+            <div class="card-header">
+              <h5 class="mb-0">Left File</h5>
+            </div>
+            <div class="card-body">
+              <div id="leftFileInfo" class="file-info" style="display: none;">
+                <small class="text-muted" id="leftFileName"></small>,
+                <small class="text-muted" id="leftFileType"></small>
+              </div>
+              <div id="leftCloseButton" style="display: none; text-align: center; margin-bottom: 1rem;">
+                <button class="btn btn-outline-danger btn-sm">
+                  <i class="fas fa-times"></i> Close File
+                </button>
+              </div>
+
+              <div id="dropAreaLeft" class="drop-area">
+                <p>Drag and Drop a File Here or</p>
+                <p>
+                  <input type="file" id="fileInputLeft" accept=".SVD" style="display: none;" />
+                  <label for="fileInputLeft" class="file-input-label">Select a File</label>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-auto ms-4">
+          <div class="card" style="width: 450px;">
+            <div class="card-header">
+              <h5 class="mb-0">Right File</h5>
+            </div>
+            <div class="card-body">
+              <div id="rightFileInfo" class="file-info" style="display: none;">
+                <small class="text-muted" id="rightFileName"></small>
+                <small class="text-muted" id="rightFileType"></small>
+              </div>
+              <div id="rightCloseButton" style="display: none; text-align: center; margin-bottom: 1rem;">
+                <button class="btn btn-outline-danger btn-sm">
+                  <i class="fas fa-times"></i> Close File
+                </button>
+              </div>
+
+              <div id="dropAreaRight" class="drop-area">
+                <p>Drag and Drop a File Here or</p>
+                <p>
+                  <input type="file" id="fileInputRight" accept=".SVD" style="display: none;" />
+                  <label for="fileInputRight" class="file-input-label">Select a File</label>
+              </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Patterns Tab -->
+    <div class="tab-pane fade" id="patterns" role="tabpanel" aria-labelledby="patterns-tab">
+      <div id="patternsContent">
+        <!-- Patterns content will be dynamically generated -->
+      </div>
+    </div>
+    
+    <!-- Patches Tab -->
+    <div class="tab-pane fade" id="patches" role="tabpanel" aria-labelledby="patches-tab">
+      <div id="patchesContent">
+        <!-- Patches content will be dynamically generated -->
+      </div>
+    </div>
+    
+    <!-- Drumkits Tab -->
+    <div class="tab-pane fade" id="drums" role="tabpanel" aria-labelledby="drums-tab">
+      <div id="drumsContent">
+        <!-- Drumkits content will be dynamically generated -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer bg-light">
+  <div class="container-fluid h-100">
+    <div class="row h-100">
+      <!-- Left File Footer -->
+      <div class="col-md-6 footer-section">
+        <div class="d-flex justify-content-between align-items-center h-100">
+          <div class="footer-info">
+            <div class="footer-file-name" id="footerFileNameLeft">No file loaded</div>
+            <div class="footer-file-status" id="footerFileStatusLeft"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="saveLeft" disabled="disabled">Save Left</button>
+        </div>
+      </div>
+      
+      <!-- Right File Footer -->
+      <div class="col-md-6 footer-section">
+        <div class="d-flex justify-content-between align-items-center h-100">
+          <div class="footer-info">
+            <div class="footer-file-name" id="footerFileNameRight">No file loaded</div>
+            <div class="footer-file-status" id="footerFileStatusRight"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="saveRight" disabled="disabled">Save Right</button>
+        </div>
+      </div>
+
+      <!-- Single File Footer (shown when only one file is loaded) -->
+      <div class="col-12 footer-section footer-single" style="display: none;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+          <div class="footer-info text-center me-3">
+            <div class="footer-file-name" id="footerFileNameSingle">No file loaded</div>
+            <div class="footer-file-status" id="footerFileStatusSingle"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="saveSingle">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- About Modal -->
+<div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" inert>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aboutModalLabel">About Roland SH-4d  Librarian</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="font-weight:500">
+        <div class="" style="margin-left: auto;margin-right:auto;max-width:40rem">
+          <p>Created by <a href="https://splunge.foo" target="_blank">Splunge.foo</a>. Discussion/support at <a href="https://discord.gg/7tbkX7rAGQ" target="_blank">Discord.</a></p>
+          <p><b style="color:red">This code is still experimental. Do not overwrite and lose your original files!</b></p>
+          <p><b style="color:red">None of your files are uploaded to a server, all processing is local.</b></p>        
+          <h3>Changelog</h3>
+          <div class="changelog">
+           
+            <div class="bn">Build 1</div>
+            <ul>
+              <li>Basic file loading and editing</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include your bundled JS file via Vite -->
+</body>
+</html>
