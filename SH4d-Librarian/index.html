@@ -14,15 +14,20 @@
   <!-- Custom CSS (from src directory) -->
 
   <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-  <script type="module" crossorigin src="./assets/index-DeQw4LLI.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-MqE6KhNt.css">
+  <script type="module" crossorigin src="./assets/index-C3Rm0yMo.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BRFN93Uh.css">
 </head>
 
 <body>
 <div class="content">
   <header>
-    <h1>Roland SH-4d Librarian</h1>
-    <button class="btn btn-outline-secondary btn-sm" id="aboutBtn" data-bs-toggle="modal" data-bs-target="#aboutModal">About...</button>
+    <div class="header-content">
+      <h1>Roland SH-4d Librarian</h1>
+      <div class="header-buttons">
+        <button class="btn btn-dark btn-sm me-2 pulse-button" id="instructionsBtn" data-bs-toggle="modal" data-bs-target="#instructionsModal">📖 Instructions</button>
+        <button class="btn btn-dark btn-sm pulse-button" id="aboutBtn" data-bs-toggle="modal" data-bs-target="#aboutModal">ℹ️ About</button>
+      </div>
+    </div>
   </header>
   <nav id="mainTab" class="navbar navbar-expand-lg navbar-light sticky-top">
     <div class="container-fluid">
@@ -51,6 +56,8 @@
           <div class="alert alert-warning text-center" role="alert">
             <h4 class="alert-heading">⚠️ Warning: This code is experimental!</h4>
             <p class="mb-0">Do not overwrite and lose your original files! All processing is done locally - none of your files are uploaded to a server.</p>
+            <br/>
+            <p>See the <a href="#" data-bs-toggle="modal" data-bs-target="#instructionsModal" class="alert-link">📖 Instructions</a> for important information.</p>
           </div>
         </div>
       </div>
@@ -196,6 +203,29 @@
               <li>Basic file loading and editing</li>
             </ul>
           </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Instructions Modal -->
+<div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog" style="max-width: 90vw; max-height: 90vh; width: 90vw; height: 90vh;">
+    <div class="modal-content" style="height: 100%;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="instructionsModalLabel">Instructions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="overflow-y: auto; height: calc(100% - 120px);" id="instructionsContent">
+        <div class="text-center p-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading instructions...</p>
         </div>
       </div>
       <div class="modal-footer">
