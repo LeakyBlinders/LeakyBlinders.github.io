@@ -14,8 +14,8 @@
   <!-- Custom CSS (from src directory) -->
 
   <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-  <script type="module" crossorigin src="./assets/index-C3Rm0yMo.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BRFN93Uh.css">
+  <script type="module" crossorigin src="./assets/index-DKANSdCd.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BnOWkqOE.css">
 </head>
 
 <body>
@@ -52,12 +52,13 @@
     <div class="tab-pane fade show active" id="project" role="tabpanel" aria-labelledby="project-tab">
       <!-- Warning Box -->
       <div class="row justify-content-center mb-4">
-        <div class="col-md-8">
+        <div class="col-md-5">
           <div class="alert alert-warning text-center" role="alert">
             <h4 class="alert-heading">⚠️ Warning: This code is experimental!</h4>
             <p class="mb-0">Do not overwrite and lose your original files! All processing is done locally - none of your files are uploaded to a server.</p>
             <br/>
             <p>See the <a href="#" data-bs-toggle="modal" data-bs-target="#instructionsModal" class="alert-link">📖 Instructions</a> for important information.</p>
+            <p class="mb-2"><strong>This is now build 2</strong>. See <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal" class="alert-link">ℹ️ About</a></p>
           </div>
         </div>
       </div>
@@ -86,6 +87,9 @@
                   <input type="file" id="fileInputLeft" accept=".SVD" style="display: none;" />
                   <label for="fileInputLeft" class="file-input-label">Select a File</label>
                 </p>
+                <p style="margin-top: 10px;">
+                  <button class="btn btn-outline-primary btn-sm" id="loadEmptyLeft">Load Empty Project</button>
+                </p>
               </div>
             </div>
           </div>
@@ -112,7 +116,10 @@
                 <p>
                   <input type="file" id="fileInputRight" accept=".SVD" style="display: none;" />
                   <label for="fileInputRight" class="file-input-label">Select a File</label>
-              </p>
+                </p>
+                <p style="margin-top: 10px;">
+                  <button class="btn btn-outline-primary btn-sm" id="loadEmptyRight">Load Empty Project</button>
+                </p>
               </div>
             </div>
           </div>
@@ -198,6 +205,12 @@
           <h3>Changelog</h3>
           <div class="changelog">
            
+            <div class="bn">Build 2</div>
+            <ul>
+              <li>Fixed rename mode (issues with production build)</li>
+              <li>Added a load empty file button</li>
+              <li>Initial work on trying to be mobile friendly</li>
+            </ul>
             <div class="bn">Build 1</div>
             <ul>
               <li>Basic file loading and editing</li>
