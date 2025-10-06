@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; connect-src ws://localhost:5173 'self' https://splungefoo.goatcounter.com/count; img-src  'self' 'unsafe-inline' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; connect-src ws://localhost:5173 'self' https://splungefoo.goatcounter.com/count; img-src  'self' 'unsafe-inline' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
 
   <title>Roland SH-4d Project Librarian</title>
 
@@ -19,7 +19,7 @@
   <!-- Custom CSS (from src directory) -->
 
   <script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-  <script type="module" crossorigin src="./assets/index-o4_RX8Ty.js"></script>
+  <script type="module" crossorigin src="./assets/index-DWajl7Ae.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-Ip6z0dxx.css">
 </head>
 
@@ -63,7 +63,7 @@
             <p class="mb-0">Do not overwrite and lose your original files! All processing is done locally - none of your files are uploaded to a server.</p>
             <br/>
             <p>See the <a href="#" data-bs-toggle="modal" data-bs-target="#instructionsModal" class="alert-link">📖 Instructions</a> for important information.</p>
-            <p class="mb-2"><strong>This is now build 7</strong>. See <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal" class="alert-link">ℹ️ About</a></p>
+            <p class="mb-2"><strong>This is now build 8</strong>. See <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal" class="alert-link">ℹ️ About</a></p>
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@
             </div>
             <div class="card-body">
               <div id="rightFileInfo" class="file-info" style="display: none;">
-                <small class="text-muted" id="rightFileName"></small>
+                <small class="text-muted" id="rightFileName"></small>,
                 <small class="text-muted" id="rightFileType"></small>
               </div>
               <div id="rightCloseButton" style="display: none; text-align: center; margin-bottom: 1rem;">
@@ -209,13 +209,15 @@
           <p><b style="color:red">None of your files are uploaded to a server, all processing is local.</b></p>        
           <h3>Changelog</h3>
           <div class="changelog">
-            <div class="bn">Build 7</div>
+            <div class="bn">Build 8</div>
             <ul>
-              <li>Fixed issue with renaming not working if you just change case.</li>
-              <li>Added a swap button. Select 2 items on the same side and click the swap button. Note at this time does NOT fix any patterns pointing to exhanged items. TODO. Still useful for getting all your patterns into order.</li>
+              <li>Fixed issue with chain length and next pattern not showing correctly.</li>
+              <li>Added print button to patterns, patches and drumkits to show a list of all items.</li>
             </ul>
             <div class="bn">Previous</div>
             <ul>
+              <li>Fixed issue with renaming not working if you just change case.</li>
+              <li>Added a swap button. Select 2 items on the same side and click the swap button. Note at this time does NOT fix any patterns pointing to exhanged items. TODO. Still useful for getting all your patterns into order.</li>
               <li>Added Favicons</li>
               <li>Doing multiple selections (>2) on patches or drumkits now shows all the patterns they are connected to.</li>
               <li>Quick info mode (not on mobile) hover over right hand side to see quick info button.</li>
