@@ -67,7 +67,7 @@
             display:flex;
             flex-wrap: wrap;
             justify-content: space-evenly;
-            column-gap: 2em;
+            column-gap: 0.5em;
         }
         #items-container > div {
             width:30%;
@@ -77,6 +77,7 @@
             margin-bottom: 2em;
             flex-grow: 1;
             flex-shrink: 1;
+            padding: 1em
         }
         #logo-flange {
             display: flex;
@@ -141,7 +142,31 @@
         <div class="logo-slogan">SERVING SOMETHING USEFUL</div>
     </div>
 </div>
-<div id="items-container">
+<div id="items-container" >
+    <div style="background-color: #e2cccc;">
+        <div class="element-title"><a href="https://github.com/DrKnackeratorStrikesAgain" target="_blank">New Github Repo</a></div>
+        <div class="element-description">
+            <a href="https://github.com/DrKnackeratorStrikesAgain" target="_blank">
+                Putting up the library and source for a lot of these projects when i get some time.
+            </a>
+        </div>
+    </div>
+    <div>
+        <div class="element-title"><a href="https://github.com/DrKnackeratorStrikesAgain/Roland-Structured-Storage" target="_blank">Roland Structured Storage Library</a></div>
+        <div class="element-description">
+            <a href="https://github.com/DrKnackeratorStrikesAgain/Roland-Structured-Storage" target="_blank">
+                The Javascript Library for reading and writing the Roland Structured Storage format. (ZenCore, Jupiter X/Xm, MC707/101, SH-4d, etc.)
+            </a>
+        </div>
+    </div>
+    <div>
+        <div class="element-title"><a href="https://github.com/DrKnackeratorStrikesAgain/roland-structured-storage-pattern" target="_blank">Roland Structured Storage File Format</a></div>
+        <div class="element-description">
+            <a href="https://github.com/DrKnackeratorStrikesAgain/roland-structured-storage-pattern" target="_blank">
+                Binary defintions for the Roland Structured Storage File Format. (ZenCore, Jupiter X/Xm, MC707/101, SH-4d, etc.). A pattern file for using with the <b><a href="https://https://imhex.werwolv.net/" target="_blank">IMHex</a></b> binary editor.
+            </a>
+        </div>
+    </div>
     <div>
         <div class="element-title"><a href="/SH4d-Librarian/" target="_blank">Roland SH-4d Librarian</a></div>
         <div class="element-description">
@@ -191,8 +216,8 @@
             <a href="/zeninspector" target="_blank">An app to explore binary data stored in Roland ZenCore sound files, MC-707/101 projects and Fantom scenes.
         </a></div>
     </div>
-    <div><div class="element-title"><a href="https://github.com/DrKnackerator/RolandZenDecodeXML" target="_blank">Roland<wbr />Zen<wbr />Decode<wbr />XML</a></div>
-        <div class="element-description"><a href="https://github.com/DrKnackerator/RolandZenDecodeXML" target="_blank">
+    <div><div class="element-title"><a href="https://github.com/DrKnackeratorStrikesAgain/Roland-Zen-Decode-XML" target="_blank">Roland<wbr />Zen<wbr />Decode<wbr />XML</a></div>
+        <div class="element-description"><a href="https://github.com/DrKnackeratorStrikesAgain/Roland-Zen-Decode-XML" target="_blank">
             A tool to decode Roland editor XML files (initially Jupiter X/Xm and ZenCore) and generate JSON and a Javascript module with byte offsets (for files) and SYSEX locations/length, with plain text and HTML output tables for easy reading.
         </a></div>
     </div>
