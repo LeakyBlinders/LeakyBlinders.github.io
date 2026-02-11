@@ -922,6 +922,7 @@
             cursor: move;
             pointer-events: auto;
             background: transparent;
+            touch-action: none;
         }
         
         .crop-box::before {
@@ -942,6 +943,7 @@
             transition: opacity 0.2s ease;
             pointer-events: auto;
             z-index: 10;
+            touch-action: none;
         }
         
         .crop-box:hover .crop-handle,
@@ -953,6 +955,12 @@
         .crop-handle.ne { top: -12px; right: -12px; cursor: ne-resize; }
         .crop-handle.sw { bottom: -12px; left: -12px; cursor: sw-resize; }
         .crop-handle.se { bottom: -12px; right: -12px; cursor: se-resize; }
+
+        @media (pointer: coarse) {
+            .crop-handle {
+                opacity: 1;
+            }
+        }
         
 
         .image-card.selected .image-name {
@@ -1710,6 +1718,14 @@
         @media (max-width: 700px) and (pointer: coarse) {
             .mobile-warning {
                 display: flex;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .drawer {
+                width: 214px;
+                flex: 0 0 214px;
+                font-size: 95%;
             }
         }</style><script>(function () {
             try {
