@@ -349,6 +349,18 @@
             display: flex;
             height: calc(100vh - 65px);
         }
+
+        @supports (height: 100dvh) {
+            .main-container {
+                height: calc(100dvh - 65px);
+            }
+        }
+
+        @supports (height: 100svh) {
+            .main-container {
+                height: calc(100svh - 65px);
+            }
+        }
         
         /* Drawer */
         .drawer {
