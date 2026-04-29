@@ -1,0 +1,450 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  --background: #f6f7fb;
+  --panel: #ffffff;
+  --text: #182033;
+  --muted: #5d667a;
+  --border: #d8deea;
+  --accent: #1769e0;
+  --accent-dark: #0f53b5;
+  --danger: #b42318;
+  --danger-bg: #fff1f0;
+  --radius: 10px;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.app {
+  width: min(1120px, calc(100% - 16px));
+  margin: 16px auto;
+}
+
+.app-header {
+  margin-bottom: 10px;
+}
+
+.app-header-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  margin-bottom: 6px;
+}
+
+.app-header-title-row h1 {
+  margin: 0;
+}
+
+button.about-button {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+h1 {
+  margin: 0 0 3px;
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+  line-height: 1.1;
+}
+
+p {
+  max-width: 860px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.about-dialog {
+  max-width: min(40rem, calc(100vw - 32px));
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgba(24, 32, 51, 0.22);
+}
+
+.about-dialog::backdrop {
+  background: rgba(24, 32, 51, 0.38);
+}
+
+.about-dialog-inner {
+  padding: 16px 18px 14px;
+}
+
+.about-dialog-inner h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.about-dialog-inner > p {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: none;
+}
+
+.about-dialog-inner ul {
+  margin: 0 0 4px;
+  padding-left: 1.25em;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.about-dialog-inner li {
+  margin-bottom: 8px;
+}
+
+.about-dialog-inner li strong {
+  color: #26324a;
+}
+
+.about-dialog-inner code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  background: #f0f3f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.about-dialog-inner form {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.panel {
+  display: grid;
+  gap: 11px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 40px rgba(24, 32, 51, 0.08);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.field {
+  display: grid;
+  grid-column: span 2;
+  gap: 3px;
+}
+
+.field-wide {
+  grid-column: span 3;
+}
+
+/* 4-byte hex inputs — span 2 so a full row fits in 12 columns */
+.field-hex {
+  grid-column: span 2;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.field-inline {
+  display: flex;
+  grid-column: span 2;
+  flex-wrap: wrap;
+  align-content: start;
+  gap: 4px 7px;
+  padding: 0;
+  border: 0;
+}
+
+.field-inline legend,
+.message-type legend,
+.field span {
+  color: #26324a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.field-inline legend,
+.message-type legend {
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.message-type {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 11px;
+  padding: 0;
+  border: 0;
+}
+
+.message-type legend {
+  margin-bottom: 3px;
+}
+
+.message-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 10px 20px;
+}
+
+.message-type-row .message-type {
+  flex: 0 1 auto;
+}
+
+.message-type-row .size-inline {
+  flex: 0 0 auto;
+  display: grid;
+  grid-column: unset;
+  gap: 3px;
+  width: auto;
+  max-width: 100%;
+}
+
+input.input-reply-wait {
+  width: 6.5rem;
+  max-width: 100%;
+}
+
+label {
+  color: var(--text);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  padding: 2px 7px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font: inherit;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+input.input-device {
+  width: 5ch;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+input.input-hex-quad {
+  width: 14ch;
+  max-width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+/* Stack model ID input + preset; same column width and aligned edges (native select inset removed). */
+.model-id-row {
+  display: grid;
+  gap: 5px;
+  width: min-content;
+  max-width: 100%;
+}
+
+.model-id-row .input-hex-quad {
+  width: 100%;
+  min-width: 18ch;
+}
+
+select.model-id-preset {
+  width: 100%;
+  min-width: 18ch;
+  margin: 0;
+  padding: 2px 1.6rem 2px 7px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%235d667a' d='M2.2%204.2%20L6%208.3%20L9.8%204.2z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.45rem center;
+  background-size: 0.55rem;
+  cursor: pointer;
+  text-indent: 0;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+input.input-count {
+  width: 7ch;
+}
+
+input[type="radio"] {
+  width: auto;
+  margin: 0 3px 0 0;
+}
+
+textarea {
+  height: 4em;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(23, 105, 224, 0.15);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+button {
+  padding: 5px 9px;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover,
+button:focus-visible {
+  background: var(--accent-dark);
+}
+
+button.secondary {
+  color: var(--accent);
+  background: #edf4ff;
+}
+
+button.secondary:hover,
+button.secondary:focus-visible {
+  color: var(--accent-dark);
+  background: #ddeaff;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.errors {
+  display: none;
+  padding: 6px 7px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid #ffcdc7;
+  border-radius: 7px;
+  white-space: pre-line;
+}
+
+.errors:not(:empty) {
+  display: block;
+}
+
+.hidden {
+  display: none;
+}
+
+#midi-status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.midi-panel {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.midi-panel h2 {
+  margin: 0 0 2px;
+  font-size: 1.05rem;
+}
+
+.reply-output {
+  display: grid;
+  gap: 6px;
+}
+
+.reply-card {
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  background: #f9fbff;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.reply-card pre {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+.reply-detail {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 920px) {
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .field,
+  .field-wide,
+  .field-inline,
+  .field-hex {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 640px) {
+  .app {
+    width: min(100% - 10px, 1120px);
+    margin: 9px auto;
+  }
+
+  .panel {
+    padding: 8px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field,
+  .field-wide,
+  .field-inline,
+  .field-hex {
+    grid-column: 1 / -1;
+  }
+}

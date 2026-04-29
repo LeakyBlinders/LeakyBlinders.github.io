@@ -1,1 +1,193 @@
-<!doctype html><html lang=""><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="/RolandSysexGenerator/favicon.ico"><title>Roland Sysex Generator</title><script data-goatcounter="https://splungefoo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous"><script defer="defer" src="/RolandSysexGenerator/js/chunk-vendors.55b22bc8.js"></script><script defer="defer" src="/RolandSysexGenerator/js/app.b634317c.js"></script><link href="/RolandSysexGenerator/css/app.a0eea3d5.css" rel="stylesheet"></head><body class="container"><h1 class="mt-4">Roland Sysex Generator</h1><div class="" style="font-size:130%">Simple script to generate sysex packets for Roland Synthesizers both send data (DT1) and request data (RQ1). Can generate multiple requests at different addresses to poke around. Works with 3 and 4 hex digit addresses. From your friends at <b><a href="https://splunge.foo" target="_blank">Spluge.foo</a></b>.</div><div class="mb-4">Only use if you know what you are doing. No warranty is issued or implied with this code and if somehow this knackers your machine, don't blame me.</div><noscript><strong>We're sorry but rolandsysexgenerator doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="app"></div></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Roland Sysex Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <div class="app-header-title-row">
+          <h1>Roland Sysex Generator</h1>
+          <button type="button" id="about-open" class="about-button secondary">About</button>
+        </div>
+        <p>
+          Roland System Exclusive packet Generator/Runner.<br/>
+          Hex bytes may be separated by spaces, commas, periods, or other punctuation.
+        </p>
+      </header>
+
+      <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
+        <div class="about-dialog-inner">
+          <h2 id="about-title">About and instructions</h2>
+          <p>
+            This page builds Roland BOSS-format System Exclusive messages (DT1 data set and
+            RQ1 data request), then optionally sends them over Web MIDI and shows any DT1 replies.
+          </p>
+          <ul>
+            <li>
+              <strong>Generate Sysex Text</strong> fills the Result area from the form. You can
+              copy hex lines without a MIDI device.
+            </li>
+            <li>
+              <strong>Run Sysex</strong> sends each packet to the selected MIDI output and listens
+              on the selected input for replies for the time set in <strong>Reply wait (ms)</strong>.
+            </li>
+            <li>
+              Hex values must stay in Roland’s 7-bit data range (00–7F per byte). Model ID, start
+              address, address step, and (for RQ1) bytes-to-request all use the same
+              <strong>number of bytes (3 to 5)</strong>; that width comes from the start address
+              you enter.
+            </li>
+            <li>
+              <strong>Web MIDI</strong> requires a secure context (HTTPS or
+              <code>http://localhost</code>) and browser permission including SysEx. MIDI port
+              choices are stored in this browser only, not in shared links.
+            </li>
+            <li>
+              <strong>Copy Link To Clipboard</strong> saves the whole form (except MIDI ports) into
+              the page URL. Open that link later to restore the same settings.
+            </li>
+            <li>
+              Increase <strong>Reply wait (ms)</strong> if the device answers slowly; each request
+              waits up to that long before moving on.
+            </li>
+          </ul>
+          <form method="dialog">
+            <button type="submit" class="secondary">Close</button>
+          </form>
+        </div>
+      </dialog>
+
+      <form id="sysex-form" class="panel" novalidate>
+        <section class="grid">
+          <label class="field">
+            <span>Device ID</span>
+            <input id="device-id" name="device-id" class="input-device" value="10" autocomplete="off">
+          </label>
+
+          <label class="field field-hex">
+            <span>Model ID</span>
+            <div class="model-id-row">
+              <input id="model-id" name="model-id" class="input-hex-quad" value="00 00 00 5D" autocomplete="off">
+              <select id="model-id-preset" class="model-id-preset" aria-label="Model ID preset">
+                <option value="">Preset…</option>
+                <option value="00 00 00 5D">MC-707</option>
+                <option value="00 00 00 5E">MC-101</option>
+                <option value="00 00 00 5B">FANTOM EX 6/7/8</option>
+                <option value="00 00 00 65">JUPITER-X/Xm</option>
+                <option value="01 05 0A">Juno-D</option>
+                <option value="00 00 00 00 12">Juno-X</option>
+
+              </select>
+            </div>
+          </label>
+
+          <label class="field field-hex">
+            <span>Start Address</span>
+            <input id="start-address" name="start-address" class="input-hex-quad" value="01 00 00 00" autocomplete="off">
+          </label>
+
+          <label class="field">
+            <span># Requests (decimal)</span>
+            <input id="request-count" name="request-count" class="input-count" type="number" min="1" value="1">
+          </label>
+
+          <fieldset class="field field-inline">
+            <legend>Address Direction</legend>
+            <label>
+              <input type="radio" name="address-direction" value="increment" checked>
+              Inc Address
+            </label>
+            <label>
+              <input type="radio" name="address-direction" value="decrement">
+              Dec Address
+            </label>
+          </fieldset>
+
+          <label class="field">
+            <span>Change Address By</span>
+            <input id="address-step" name="address-step" class="input-hex-quad" value="00 00 10 00" autocomplete="off">
+          </label>
+        </section>
+
+        <div class="message-type-row">
+          <fieldset class="message-type">
+            <legend>Message Type</legend>
+            <label>
+              <input type="radio" name="message-type" value="dt1">
+              Data Set 1 (DT1)
+            </label>
+            <label>
+              <input type="radio" name="message-type" value="rq1" checked>
+              Data Request 1 (RQ1)
+            </label>
+          </fieldset>
+
+          <label class="field size-inline" id="size-field">
+            <span>Bytes to Request</span>
+            <input id="request-size" name="request-size" class="input-hex-quad" value="00 00 01 00" autocomplete="off">
+          </label>
+
+          <label class="field size-inline">
+            <span>Reply wait (ms)</span>
+            <input
+              id="reply-timeout-ms"
+              name="reply-timeout-ms"
+              type="number"
+              min="1"
+              max="300000"
+              class="input-reply-wait"
+              value="100"
+              autocomplete="off"
+            >
+          </label>
+        </div>
+
+        <label class="field field-full hidden" id="data-field">
+          <span>Data to Set</span>
+          <textarea id="data-bytes" name="data-bytes" rows="3" placeholder="xx xx xx xx"></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="submit">Generate Sysex Text</button>
+          <button type="button" id="copy-result" class="secondary">Copy Sysex Text</button>
+          <button type="button" id="clear-result" class="secondary">Clear Output</button>
+          <button type="button" id="run-sysex">Run Sysex</button>
+          <button type="button" id="copy-link" class="secondary">Copy Link To Clipboard</button>
+        </div>
+
+        <output id="error-output" class="errors" aria-live="polite"></output>
+
+        <label class="field field-full">
+          <span>Result</span>
+          <textarea id="result" rows="12" readonly></textarea>
+        </label>
+
+        <section class="midi-panel" aria-labelledby="midi-heading">
+          <div>
+            <h2 id="midi-heading">Web MIDI</h2>
+            <p id="midi-status">MIDI is not connected yet.</p>
+          </div>
+
+          <div class="grid">
+            <label class="field field-wide">
+              <span>MIDI Input</span>
+              <select id="midi-input"></select>
+            </label>
+
+            <label class="field field-wide">
+              <span>MIDI Output</span>
+              <select id="midi-output"></select>
+            </label>
+          </div>
+
+          <div id="reply-output" class="reply-output" aria-live="polite"></div>
+        </section>
+      </form>
+    </main>
+  </body>
+</html>
