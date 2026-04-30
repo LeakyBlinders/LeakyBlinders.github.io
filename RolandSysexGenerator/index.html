@@ -3,15 +3,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Roland Sysex Generator</title>
+    <title>Roland Sysex Generator / Calculator</title>
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
+    <script src="calc.js" defer></script>
   </head>
   <body>
     <main class="app">
       <header class="app-header">
         <div class="app-header-title-row">
-          <h1>Roland Sysex Generator</h1>
+          <h1 class="app-title" aria-label="Roland Sysex Generator / Calculator">
+            <button type="button" class="view-tab active" data-view="sysex">Roland Sysex Generator</button>
+            <span aria-hidden="true">/</span>
+            <button type="button" class="view-tab" data-view="calculator">Calculator</button>
+          </h1>
           <button type="button" id="about-open" class="about-button secondary">About</button>
         </div>
         <p>
@@ -37,13 +42,13 @@
             </li>
             <li>
               <strong>Run Sysex</strong> sends each packet to the selected MIDI output and listens
-              on the selected input for replies for the time set in <strong>Reply wait (ms)</strong>.
+              on the selected input until all requested bytes arrive or the reply wait expires.
             </li>
             <li>
               Hex values must stay in Roland’s 7-bit data range (00–7F per byte). Model ID, start
               address, address step, and (for RQ1) bytes-to-request all use the same
               <strong>number of bytes (3 to 5)</strong>; that width comes from the start address
-              you enter.
+              you enter. Paired hex/decimal fields update each other as you type.
             </li>
             <li>
               <strong>Web MIDI</strong> requires a secure context (HTTPS or
@@ -56,7 +61,8 @@
             </li>
             <li>
               Increase <strong>Reply wait (ms)</strong> if the device answers slowly; each request
-              waits up to that long before moving on.
+              waits until that much time has passed since the last reply packet unless the requested
+              byte count arrives first.
             </li>
           </ul>
           <form method="dialog">
@@ -65,7 +71,7 @@
         </div>
       </dialog>
 
-      <form id="sysex-form" class="panel" novalidate>
+      <form id="sysex-form" class="panel app-view" data-view-panel="sysex" novalidate>
         <section class="grid">
           <label class="field">
             <span>Device ID</span>
@@ -90,15 +96,33 @@
             </div>
           </label>
 
-          <label class="field field-hex">
+          <div class="field field-hex field-dual">
             <span>Start Address</span>
-            <input id="start-address" name="start-address" class="input-hex-quad" value="01 00 00 00" autocomplete="off">
-          </label>
+            <div class="dual-inputs">
+              <label class="dual-subfield">
+                <input id="start-address" name="start-address" class="input-hex-quad" value="01 00 00 00" autocomplete="off">
+                <span title="Hex">H</span>
+              </label>
+              <label class="dual-subfield">
+                <input id="start-address-decimal" class="input-decimal" type="number" min="0" value="2097152" autocomplete="off">
+                <span title="Decimal">D</span>
+              </label>
+            </div>
+          </div>
 
-          <label class="field">
-            <span># Requests (decimal)</span>
-            <input id="request-count" name="request-count" class="input-count" type="number" min="1" value="1">
-          </label>
+          <div class="field field-dual">
+            <span># Requests</span>
+            <div class="dual-inputs">
+              <label class="dual-subfield">
+                <input id="request-count-hex" class="input-count" value="1" autocomplete="off">
+                <span title="Hex">H</span>
+              </label>
+              <label class="dual-subfield">
+                <input id="request-count" name="request-count" class="input-count" type="number" min="1" value="1" autocomplete="off">
+                <span title="Decimal">D</span>
+              </label>
+            </div>
+          </div>
 
           <fieldset class="field field-inline">
             <legend>Address Direction</legend>
@@ -112,13 +136,22 @@
             </label>
           </fieldset>
 
-          <label class="field">
+          <div class="field field-dual">
             <span>Change Address By</span>
-            <input id="address-step" name="address-step" class="input-hex-quad" value="00 00 10 00" autocomplete="off">
-          </label>
+            <div class="dual-inputs">
+              <label class="dual-subfield">
+                <input id="address-step" name="address-step" class="input-hex-quad" value="00 00 10 00" autocomplete="off">
+                <span title="Hex">H</span>
+              </label>
+              <label class="dual-subfield">
+                <input id="address-step-decimal" class="input-decimal" type="number" min="0" value="2048" autocomplete="off">
+                <span title="Decimal">D</span>
+              </label>
+            </div>
+          </div>
         </section>
 
-        <div class="message-type-row">
+        <section class="message-type-row" aria-label="Message type and reply timing">
           <fieldset class="message-type">
             <legend>Message Type</legend>
             <label>
@@ -131,10 +164,19 @@
             </label>
           </fieldset>
 
-          <label class="field size-inline" id="size-field">
+          <div class="field size-inline field-dual" id="size-field">
             <span>Bytes to Request</span>
-            <input id="request-size" name="request-size" class="input-hex-quad" value="00 00 01 00" autocomplete="off">
-          </label>
+            <div class="dual-inputs">
+              <label class="dual-subfield">
+                <input id="request-size" name="request-size" class="input-hex-quad" value="00 00 01 00" autocomplete="off">
+                <span title="Hex">H</span>
+              </label>
+              <label class="dual-subfield">
+                <input id="request-size-decimal" class="input-decimal" type="number" min="0" value="128" autocomplete="off">
+                <span title="Decimal">D</span>
+              </label>
+            </div>
+          </div>
 
           <label class="field size-inline">
             <span>Reply wait (ms)</span>
@@ -149,7 +191,7 @@
               autocomplete="off"
             >
           </label>
-        </div>
+        </section>
 
         <label class="field field-full hidden" id="data-field">
           <span>Data to Set</span>
@@ -177,7 +219,7 @@
             <p id="midi-status">MIDI is not connected yet.</p>
           </div>
 
-          <div class="grid">
+          <div class="midi-ports-row">
             <label class="field field-wide">
               <span>MIDI Input</span>
               <select id="midi-input"></select>
@@ -187,11 +229,93 @@
               <span>MIDI Output</span>
               <select id="midi-output"></select>
             </label>
+
+            <div class="midi-raw-cell">
+              <input type="hidden" name="show-raw" id="show-raw" value="0">
+              <button type="button" id="show-raw-toggle" class="secondary" aria-pressed="false">
+                Show raw
+              </button>
+            </div>
           </div>
 
           <div id="reply-output" class="reply-output" aria-live="polite"></div>
         </section>
       </form>
+
+      <section id="calculator-view" class="panel calculator-panel app-view hidden" data-view-panel="calculator" aria-labelledby="calculator-heading">
+        <h2 id="calculator-heading">Roland SysEx Address Calculator</h2>
+
+        <div id="calculator-app">
+          <div id="calc-col">
+            <div class="calc-section">
+              <h3>Calculate</h3>
+
+              <div class="calc-row">
+                <span class="row-label">Operation</span>
+                <div class="op-choice">
+                  <label class="op-btn">
+                    <input type="radio" name="calc-op" value="add" id="calc-op-add" checked>
+                    <span class="op-btn-face">Add</span>
+                  </label>
+                  <label class="op-btn">
+                    <input type="radio" name="calc-op" value="sub" id="calc-op-sub">
+                    <span class="op-btn-face">Subtract</span>
+                  </label>
+                  <label class="op-btn">
+                    <input type="radio" name="calc-op" value="item" id="calc-op-item">
+                    <span class="op-btn-face">Item Size</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="calc-row">
+                <span class="row-label">Val 1</span>
+                <input class="sysex-in" id="m1-sx" type="text" placeholder="00 00 00 00" value="00 00 00 00">
+                <span class="pipe">|</span>
+                <input class="dec-in" id="m1-dec" type="number" min="0" max="268435455" value="0">
+              </div>
+
+              <div class="calc-row">
+                <span class="row-label" id="m2-label">Val 2</span>
+                <input class="sysex-in" id="m2-sx" type="text" placeholder="00 00 00 00" value="00 00 00 00">
+                <span class="pipe">|</span>
+                <input class="dec-in" id="m2-dec" type="number" min="0" max="268435455" value="0">
+                <label class="arr-label" id="m-arr-wrap">
+                  <input type="checkbox" id="m-arr"> Array
+                </label>
+                <span class="count-wrap hidden" id="m-count-wrap">
+                  Count <input class="count-in" id="m-count" type="number" min="1" value="1">
+                </span>
+              </div>
+
+              <hr class="div">
+
+              <div class="calc-row result-row">
+                <span class="row-label">Result</span>
+                <input class="sysex-in" id="mr-sx" type="text" readonly value="00 00 00 00">
+                <span class="pipe">|</span>
+                <input class="dec-in" id="mr-dec" type="number" readonly value="0" step="any">
+                <button class="calc-btn" type="button" id="calc-btn">Add</button>
+              </div>
+              <div class="err" id="m-err"></div>
+              <div class="rem-mod" id="m-rem"></div>
+              <div class="replace-val-wrap" id="replace-val-wrap">
+                <button type="button" class="chain-btn" id="chain-add-replace">Add and Replace Val1</button>
+                <button type="button" class="chain-btn" id="chain-sub-replace" hidden>Subtract and Replace Val1</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tape-col">
+            <div id="tape-header">
+              <span id="tape-label">Log</span>
+              <button class="copy-btn" type="button" id="copy-tape-text">Copy text</button>
+              <button class="copy-btn" type="button" id="copy-tape-markdown">Copy markdown</button>
+            </div>
+            <textarea id="tickertape" placeholder="Results will appear here..." spellcheck="false"></textarea>
+          </div>
+        </div>
+      </section>
     </main>
   </body>
 </html>

@@ -16,8 +16,12 @@ const midiInputSelect = document.querySelector("#midi-input");
 const midiOutputSelect = document.querySelector("#midi-output");
 const midiStatus = document.querySelector("#midi-status");
 const replyOutput = document.querySelector("#reply-output");
+const showRawInput = document.querySelector("#show-raw");
+const showRawToggle = document.querySelector("#show-raw-toggle");
 const modelIdInput = document.querySelector("#model-id");
 const modelIdPresetSelect = document.querySelector("#model-id-preset");
+const viewTabs = document.querySelectorAll(".view-tab");
+const viewPanels = document.querySelectorAll("[data-view-panel]");
 
 const MIDI_INPUT_STORAGE_KEY = "rolandSysexMidiInputId";
 const MIDI_OUTPUT_STORAGE_KEY = "rolandSysexMidiOutputId";
@@ -30,6 +34,18 @@ const HEX_ADDR_ID_OPTS = { minLength: 3, maxLength: 5 };
 
 let midiAccess;
 let midiAccessPromise;
+
+function setActiveView(view) {
+  const selectedView = view === "calculator" ? "calculator" : "sysex";
+  viewTabs.forEach((tab) => {
+    const active = tab.dataset.view === selectedView;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-current", active ? "page" : "false");
+  });
+  viewPanels.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.viewPanel !== selectedView);
+  });
+}
 
 function extractHexDigitString(value) {
   const stripped = String(value)
@@ -81,10 +97,31 @@ function parseHexBytes(value, label, options = {}) {
 }
 
 function parsePositiveInteger(value, label) {
-  const parsed = Number.parseInt(value, 10);
+  return parseWholeNumber(value, label, { min: 1 });
+}
 
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    throw new Error(`${label} must be a positive whole number.`);
+function parseWholeNumber(value, label, { min = 0 } = {}) {
+  const raw = String(value).trim();
+  const parsed = Number.parseInt(raw, 10);
+
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(parsed) || parsed < min) {
+    const requirement = min > 0 ? "positive" : "non-negative";
+    throw new Error(`${label} must be a ${requirement} whole number.`);
+  }
+
+  return parsed;
+}
+
+function parseHexInteger(value, label, { min = 0 } = {}) {
+  const digits = extractHexDigitString(value);
+  if (!digits) {
+    throw new Error(`${label} is required.`);
+  }
+
+  const parsed = Number.parseInt(digits, 16);
+  if (!Number.isSafeInteger(parsed) || parsed < min) {
+    const requirement = min > 0 ? "positive" : "non-negative";
+    throw new Error(`${label} must be a ${requirement} whole number.`);
   }
 
   return parsed;
@@ -112,7 +149,7 @@ function formatReplyWaitLabel(ms) {
 }
 
 function bytesToNumber(bytes) {
-  return bytes.reduce((total, byte) => (total << 7) + byte, 0);
+  return bytes.reduce((total, byte) => total * 0x80 + byte, 0);
 }
 
 function numberToBytes(value, length) {
@@ -124,8 +161,8 @@ function numberToBytes(value, length) {
   let remaining = value;
 
   for (let index = length - 1; index >= 0; index -= 1) {
-    bytes[index] = remaining & 0x7f;
-    remaining >>= 7;
+    bytes[index] = remaining % 0x80;
+    remaining = Math.floor(remaining / 0x80);
   }
 
   if (remaining > 0) {
@@ -146,6 +183,93 @@ function formatByte(byte) {
 
 function formatPacket(bytes) {
   return bytes.map(formatByte).join(" ");
+}
+
+function formatHexInteger(value) {
+  return value.toString(16).toUpperCase();
+}
+
+function getCurrentAddressLength(fallback = 4) {
+  try {
+    return parseHexBytes(form.elements["start-address"].value, "Start Address", HEX_ADDR_ID_OPTS).length;
+  } catch {
+    const digitLength = extractHexDigitString(form.elements["start-address"].value).length;
+    const byteLength = Math.ceil(digitLength / 2);
+    return byteLength >= HEX_ADDR_ID_OPTS.minLength && byteLength <= HEX_ADDR_ID_OPTS.maxLength
+      ? byteLength
+      : fallback;
+  }
+}
+
+function setupByteDecimalPair({ hexId, decimalId, label, parseOptions, getByteLength }) {
+  const hexInput = document.querySelector(`#${hexId}`);
+  const decimalInput = document.querySelector(`#${decimalId}`);
+  const resolvedParseOptions = () =>
+    typeof parseOptions === "function" ? parseOptions() : parseOptions;
+
+  function syncDecimalFromHex() {
+    try {
+      const bytes = parseHexBytes(hexInput.value, label, resolvedParseOptions());
+      decimalInput.value = String(bytesToNumber(bytes));
+    } catch {
+      decimalInput.value = "";
+    }
+  }
+
+  function syncHexFromDecimal() {
+    if (String(decimalInput.value).trim() === "") {
+      hexInput.value = "";
+      return;
+    }
+
+    try {
+      const value = parseWholeNumber(decimalInput.value, label);
+      hexInput.value = formatPacket(numberToBytes(value, getByteLength()));
+    } catch {
+      hexInput.value = "";
+    }
+  }
+
+  hexInput.addEventListener("input", syncDecimalFromHex);
+  decimalInput.addEventListener("input", syncHexFromDecimal);
+
+  return syncDecimalFromHex;
+}
+
+function setupRequestCountDecimalPair() {
+  const hexInput = document.querySelector("#request-count-hex");
+  const decimalInput = document.querySelector("#request-count");
+
+  function syncDecimalFromHex() {
+    try {
+      decimalInput.value = String(parseHexInteger(hexInput.value, "# Requests", { min: 1 }));
+    } catch {
+      decimalInput.value = "";
+    }
+  }
+
+  function syncHexFromDecimal() {
+    if (String(decimalInput.value).trim() === "") {
+      hexInput.value = "";
+      return;
+    }
+
+    try {
+      hexInput.value = formatHexInteger(parsePositiveInteger(decimalInput.value, "# Requests"));
+    } catch {
+      hexInput.value = "";
+    }
+  }
+
+  hexInput.addEventListener("input", syncDecimalFromHex);
+  decimalInput.addEventListener("input", syncHexFromDecimal);
+  hexInput.addEventListener("blur", () => {
+    if (hexInput.value) {
+      syncHexFromDecimal();
+    }
+  });
+
+  return syncHexFromDecimal;
 }
 
 function validateDeviceId(deviceId) {
@@ -190,6 +314,7 @@ const SHARE_QUERY_KEYS = [
   "data-bytes",
   "request-size",
   "reply-timeout-ms",
+  "show-raw",
 ];
 
 function getShareableFormValue(name) {
@@ -215,6 +340,24 @@ function buildShareUrl() {
   return url.toString();
 }
 
+function normalizeShowRawParam(value) {
+  const v = String(value).trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" ? "1" : "0";
+}
+
+function syncShowRawToggleFromInput() {
+  const on = showRawInput.value === "1";
+  showRawToggle.setAttribute("aria-pressed", on ? "true" : "false");
+  showRawToggle.textContent = on ? "Hide raw" : "Show raw";
+}
+
+function setShowRaw(on) {
+  showRawInput.value = on ? "1" : "0";
+  syncShowRawToggleFromInput();
+  const url = buildShareUrl();
+  history.replaceState(null, "", url);
+}
+
 function applyShareParamsFromUrl() {
   const params = new URLSearchParams(window.location.search);
   let found = false;
@@ -230,12 +373,13 @@ function applyShareParamsFromUrl() {
         radio.checked = radio.value === value;
       }
     } else if (el && "value" in el) {
-      el.value = value;
+      el.value = key === "show-raw" ? normalizeShowRawParam(value) : value;
     }
   }
   if (found) {
     updateMessageFields();
   }
+  syncShowRawToggleFromInput();
 }
 
 function updateMessageFields() {
@@ -404,24 +548,72 @@ function getSelectedMidiPort(collection, selectedId, label) {
   return port;
 }
 
-function waitForReplies(input, timeoutMs) {
+function waitForReplies(input, timeoutMs, options = {}) {
   return new Promise((resolve) => {
+    const { expectedPayloadBytes, modelId, addressLength } = options;
     const replies = [];
+    let receivedPayloadBytes = 0;
+    let settled = false;
+    let timeoutId;
+
+    function finish(timedOut) {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      window.clearTimeout(timeoutId);
+      input.removeEventListener("midimessage", handleMessage);
+      resolve({
+        expectedPayloadBytes,
+        incomplete:
+          Number.isInteger(expectedPayloadBytes) &&
+          timedOut &&
+          receivedPayloadBytes < expectedPayloadBytes,
+        receivedPayloadBytes,
+        replies,
+      });
+    }
+
+    function resetTimer() {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => finish(true), timeoutMs);
+    }
 
     function handleMessage(event) {
       const bytes = Array.from(event.data);
       if (bytes[0] === 0xf0 && bytes[bytes.length - 1] === 0xf7) {
         replies.push(bytes);
+
+        if (Number.isInteger(expectedPayloadBytes)) {
+          const parsed = parseDt1Reply(bytes, modelId, addressLength);
+          if (!parsed.error) {
+            receivedPayloadBytes += parsed.payload.length;
+          }
+
+          if (receivedPayloadBytes >= expectedPayloadBytes) {
+            finish(false);
+            return;
+          }
+        }
+
+        resetTimer();
       }
     }
 
     input.addEventListener("midimessage", handleMessage);
-
-    window.setTimeout(() => {
-      input.removeEventListener("midimessage", handleMessage);
-      resolve(replies);
-    }, timeoutMs);
+    resetTimer();
   });
+}
+
+function extractRequestAddressFromSentPacket(packet, modelId, addressLength) {
+  const commandIndex = 3 + modelId.length;
+  const addressStart = commandIndex + 1;
+  const end = addressStart + addressLength;
+  if (packet.length < end) {
+    return [];
+  }
+  return packet.slice(addressStart, end);
 }
 
 function parseDt1Reply(bytes, modelId, addressLength) {
@@ -459,7 +651,7 @@ function isAsciiText(bytes) {
   return bytes.length > 0 && bytes.every((byte) => byte >= 32 && byte <= 127);
 }
 
-function buildReplyGroupCard(group, groupIndex, modelId, addressLength, replyWaitMs) {
+function buildReplyGroupCard(group, groupIndex, modelId, addressLength, replyWaitMs, showRaw) {
   const card = document.createElement("article");
   card.className = "reply-card";
 
@@ -467,37 +659,60 @@ function buildReplyGroupCard(group, groupIndex, modelId, addressLength, replyWai
   title.textContent = `Sent packet ${groupIndex + 1}`;
   card.append(title);
 
+  const requestAddress = extractRequestAddressFromSentPacket(group.packet, modelId, addressLength);
+  const requestAddrText = formatPacket(requestAddress);
+
+  if (group.incomplete) {
+    const incomplete = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = `Incomplete: received ${group.receivedPayloadBytes} of ${group.expectedPayloadBytes} requested bytes.`;
+    incomplete.append(strong);
+    card.append(incomplete);
+  }
+
   if (group.replies.length === 0) {
     const empty = document.createElement("p");
-    empty.textContent = `No DT1 reply within ${formatReplyWaitLabel(replyWaitMs)}.`;
+    const strong = document.createElement("strong");
+    strong.textContent = group.incomplete
+      ? `Timed out after ${formatReplyWaitLabel(replyWaitMs)} without a complete reply.`
+      : `No DT1 reply within ${formatReplyWaitLabel(replyWaitMs)}.`;
+    empty.append(strong);
     card.append(empty);
     return card;
   }
 
   group.replies.forEach((reply, replyIndex) => {
     const parsed = parseDt1Reply(reply, modelId, addressLength);
-    const raw = document.createElement("pre");
-    raw.textContent = `Raw ${replyIndex + 1}: ${formatPacket(reply)}`;
-    card.append(raw);
+    if (showRaw) {
+      const raw = document.createElement("pre");
+      raw.textContent = `Raw ${replyIndex + 1}: ${formatPacket(reply)}`;
+      card.append(raw);
+    }
 
     const detail = document.createElement("div");
     detail.className = "reply-detail";
 
     if (parsed.error) {
-      detail.textContent = parsed.error;
+      const strong = document.createElement("strong");
+      strong.textContent = parsed.error;
+      detail.append(strong);
     } else {
-      const checksumNote =
-        parsed.receivedChecksum === parsed.expectedChecksum
-          ? ""
-          : ` checksum ${formatByte(parsed.receivedChecksum)} expected ${formatByte(
-              parsed.expectedChecksum,
-            )}`;
+      const checksumOk = parsed.receivedChecksum === parsed.expectedChecksum;
       const asciiText = isAsciiText(parsed.payload)
         ? `\nText: ${String.fromCharCode(...parsed.payload)}`
         : "";
-      detail.textContent = `Address: ${formatPacket(parsed.address)}\nLength: ${
-        parsed.payload.length
-      } bytes\nPayload: ${formatPacket(parsed.payload)}${asciiText}${checksumNote}`;
+      detail.append(
+        `rq: ${requestAddrText}  rx: ${formatPacket(parsed.address)}\nLength: ${
+          parsed.payload.length
+        } bytes\nPayload: ${formatPacket(parsed.payload)}${asciiText}`,
+      );
+      if (!checksumOk) {
+        const warn = document.createElement("strong");
+        warn.textContent = `\nChecksum mismatch: received ${formatByte(parsed.receivedChecksum)} expected ${formatByte(
+          parsed.expectedChecksum,
+        )}`;
+        detail.append(warn);
+      }
     }
 
     card.append(detail);
@@ -516,18 +731,39 @@ async function runSysex() {
     const packets = generatePacketBytes();
     const { addressLength, modelId } = getMessageShape();
     const replyWaitMs = getReplyWaitMs();
+    const expectedPayloadBytes =
+      getSelectedValue("message-type") === "rq1"
+        ? bytesToNumber(
+            parseHexBytes(form.elements["request-size"].value, "Bytes to Request", {
+              expectedLength: addressLength,
+            }),
+          )
+        : undefined;
     result.value = packets.map(formatPacket).join("\n");
 
     const access = await ensureMidiAccess();
     const input = getSelectedMidiPort(access.inputs, midiInputSelect.value, "input");
     const output = getSelectedMidiPort(access.outputs, midiOutputSelect.value, "output");
 
+    const showRaw = showRawInput.value === "1";
+
     for (let index = 0; index < packets.length; index += 1) {
       const packet = packets[index];
-      const pendingReplies = waitForReplies(input, replyWaitMs);
+      const pendingReplies = waitForReplies(input, replyWaitMs, {
+        addressLength,
+        expectedPayloadBytes,
+        modelId,
+      });
       output.send(packet);
-      const replies = await pendingReplies;
-      const card = buildReplyGroupCard({ packet, replies }, index, modelId, addressLength, replyWaitMs);
+      const replyGroup = await pendingReplies;
+      const card = buildReplyGroupCard(
+        { packet, ...replyGroup },
+        index,
+        modelId,
+        addressLength,
+        replyWaitMs,
+        showRaw,
+      );
       replyOutput.append(card);
       card.scrollIntoView({ block: "nearest", behavior: "smooth" });
       await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -619,6 +855,35 @@ modelIdPresetSelect.addEventListener("change", (event) => {
   modelIdInput.value = hex;
 });
 
+const syncDualNumericInputs = [
+  setupByteDecimalPair({
+    hexId: "start-address",
+    decimalId: "start-address-decimal",
+    label: "Start Address",
+    parseOptions: HEX_ADDR_ID_OPTS,
+    getByteLength: () => getCurrentAddressLength(4),
+  }),
+  setupRequestCountDecimalPair(),
+  setupByteDecimalPair({
+    hexId: "address-step",
+    decimalId: "address-step-decimal",
+    label: "Change Address By",
+    parseOptions: HEX_ADDR_ID_OPTS,
+    getByteLength: () => getCurrentAddressLength(4),
+  }),
+  setupByteDecimalPair({
+    hexId: "request-size",
+    decimalId: "request-size-decimal",
+    label: "Bytes to Request",
+    parseOptions: HEX_ADDR_ID_OPTS,
+    getByteLength: () => getCurrentAddressLength(4),
+  }),
+];
+
+function syncDualNumericInputsFromCanonicalValues() {
+  syncDualNumericInputs.forEach((sync) => sync());
+}
+
 [
   ["device-id", "Device ID", { expectedLength: 1 }],
   ["model-id", "Model ID", HEX_ADDR_ID_OPTS],
@@ -654,6 +919,10 @@ midiInputSelect.addEventListener("change", persistMidiPortSelections);
 midiOutputSelect.addEventListener("change", persistMidiPortSelections);
 window.addEventListener("pagehide", persistMidiPortSelections);
 
+showRawToggle.addEventListener("click", () => {
+  setShowRaw(showRawInput.value !== "1");
+});
+
 runButton.addEventListener("click", runSysex);
 
 const copyLinkDefaultLabel = copyLinkButton.textContent;
@@ -688,7 +957,15 @@ document.querySelector("#about-open").addEventListener("click", () => {
   aboutDialog.showModal();
 });
 
+viewTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    setActiveView(tab.dataset.view);
+  });
+});
+
 applyShareParamsFromUrl();
+setActiveView("sysex");
+syncDualNumericInputsFromCanonicalValues();
 updateMessageFields();
 syncModelIdPresetSelect();
 ensureMidiAccess().catch((error) => {
