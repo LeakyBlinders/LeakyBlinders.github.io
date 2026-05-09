@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="application-name" content="Zenology SVZ Tools">
+  <meta name="apple-mobile-web-app-title" content="Zenology SVZ Tools">
+  <title>Zenology Patch File Tool</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-G5FjYJJt.css">
+</head>
+<body>
+<div id="root"></div>
+<script>"use strict";const PATCH_SIZE=1632,MDL_SIZE=2048,NAME_LEN=16,PATCH_CAT_OFFSET=16,MDL_MARKER_OFFSET=2045,MDL_MODEL_TYPE_OFFSET=1632,MDL_MODEL_TYPE2_OFFSET=2046,MARKER_TYPE1=1,MARKER_TYPE2=2,MARKER_ZENCORE_TYPE2=1,MODEL_TYPE2_NAMES=new Map([[1,"ZenCore"],[5,"Jupiter-8"],[6,"Juno-106"],[7,"JX-8P"],[8,"SH-101"],[9,"JD-800"],[13,"N/Zyme"],[14,"ToneWheel"]]),PATCH_ACCENT_HUES=new Map([["ZenCore",218],["Jupiter-8",280],["Juno-106",318],["JX-8P",32],["SH-101",138],["JD-800",358],["N/Zyme",88],["Drum Kit",186],["ToneWheel",100]]);function hueForPatchAccentKey(e){if(PATCH_ACCENT_HUES.has(e))return PATCH_ACCENT_HUES.get(e);let t=0;for(let s=0;s<e.length;s++)t=Math.imul(31,t)+e.charCodeAt(s)>>>0;return t%360}function patchItemAccentAttrs(e){const t=hueForPatchAccentKey(e),s=`--patch-accent:hsl(${t} 75% 64%);--patch-accent-soft:hsla(${t} 70% 46% / 0.24)`;return` data-patch-accent="" style="${escAttr(s)}"`}function getModelName(e){if(e.length<=2046)return null;const t=e[2046];return t===0||t===1?null:MODEL_TYPE2_NAMES.get(t)??`Model ${t}`}const MAX_PER_FILE=127,CHUNK_ORDER=["DIFa","PATa","MDLa","RHYa","INSa"],PATCH_CATEGORIES=new Map([[0,"None"],[1,"Ac.Piano"],[2,"Pop-Piano"],[3,"E.Grand Piano"],[4,"E.Piano1"],[5,"E.Piano2"],[6,"E.Organ"],[7,"Pipe Organ"],[8,"Reed Organ"],[9,"Harpsichord"],[10,"Clav"],[11,"Celesta"],[12,"Accordion"],[13,"Harmonica"],[14,"Bell"],[15,"Mallet"],[16,"Ac.Guitar"],[17,"E.Guitar"],[18,"Dist.Guitar"],[19,"Ac.Bass"],[20,"E.Bass"],[21,"Synth Bass"],[22,"Plucked/Stroke"],[23,"Solo Strings"],[24,"Ensemble Strs"],[25,"Orchestral"],[26,"Solo Brass"],[27,"Ensemble Brass"],[28,"Wind"],[29,"Flute"],[30,"Sax"],[31,"Recorder"],[32,"Vox/Choir"],[33,"Scat"],[34,"Synth Lead"],[35,"Synth Brass"],[36,"Synth Pad/Str"],[37,"Synth BellPad"],[38,"Synth PolyKey"],[39,"Synth FX"],[40,"Synth Seq/Pop"],[41,"Phrase"],[42,"Pulsating"],[43,"Beat&Groove"],[44,"Hit"],[45,"Sound FX"],[46,"Drums"],[47,"Percussion"],[48,"Stack"],[49,"Zone"],[50,"Vocoder"]]),DEFAULT_HEADER=new Uint8Array([83,86,90,97,0,0,78,101,109,108,121,17,0,0,0,0]),PLATFORM_MARKERS=[{id:"RC001",label:"RC001 (Zenology)",bytes:[82,67,48,48,49,1,0,0,0,0]},{id:"KY023",label:"KY023 (Juno-X)",bytes:[75,89,48,50,51,124,0,0,0,0]},{id:"KY019",label:"KY019 (Fantom)",bytes:[75,89,48,49,57,31,0,0,0,0]}],DEFAULT_PLATFORM_MARKER=PLATFORM_MARKERS[0];function readStr(e,t,s){let n="";for(let a=0;a<s;a++){const o=e[t+a];o!==0&&(n+=String.fromCharCode(o))}return n.trimEnd()}function readU32LE(e,t){return e.getUint32(t,!0)}function parseDataArray(e,t,s){const n=readU32LE(t,s),a=readU32LE(t,s+4),o=readU32LE(t,s+8),i=readU32LE(t,s+12),u=Math.max(0,o-16),r=[];if(u>=n*4)for(let l=0;l<n;l++)r.push(readU32LE(t,s+16+l*4));const c=[];for(let l=0;l<n;l++){const d=s+o+l*a;c.push({bytes:e.slice(d,d+a),checksum:r[l]??0})}return{itemSize:a,reserved:i,items:c}}function parseSvzBuffer(e,t){const s=new Uint8Array(e),n=new DataView(e);if(s.length<16)throw new Error("File too short to be a valid SVZ file.");const a=readStr(s,0,4);if(a!=="SVZa")throw new Error(`"${t}" is not a valid SVZ file (signature: "${a}")`);const o=s[4],i=s.slice(0,16),u=[];for(let p=0;p<o;p++){const h=16+p*16;u.push({typeId:readStr(s,h,4),modelId:readStr(s,h+4,4),start:readU32LE(n,h+8),length:readU32LE(n,h+12)})}const r={};for(const p of u)r[p.typeId]={...parseDataArray(s,n,p.start),modelId:p.modelId};let c=null;const l=u.find(p=>p.typeId==="DIFa");l&&(c={modelId:l.modelId,rawBytes:s.slice(l.start,l.start+l.length)});const d=r.MDLa&&r.PATa?{modelId:r.PATa.modelId,itemSize:r.PATa.itemSize,reserved:r.PATa.reserved}:null,f=[];if(r.MDLa){const p=r.MDLa;p.items.forEach((h,v)=>{const b=getModelName(h.bytes);f.push({id:`${t}:mdl:${v}`,name:readStr(h.bytes,0,16),categoryId:h.bytes[16],categoryName:PATCH_CATEGORIES.get(h.bytes[16])??`Unknown (${h.bytes[16]})`,sourceFile:t,chunkType:"MDLa",modelId:p.modelId,itemSize:p.itemSize,reserved:p.reserved,bytes:h.bytes,checksum:h.checksum,included:!0,modelName:b})})}else if(r.PATa){const p=r.PATa;p.items.forEach((h,v)=>{f.push({id:`${t}:pat:${v}`,name:readStr(h.bytes,0,16),categoryId:h.bytes[16],categoryName:PATCH_CATEGORIES.get(h.bytes[16])??`Unknown (${h.bytes[16]})`,sourceFile:t,chunkType:"PATa",modelId:p.modelId,itemSize:p.itemSize,reserved:p.reserved,bytes:h.bytes,checksum:h.checksum,included:!0,modelName:null})})}const g=[];if(r.RHYa&&r.INSa){const p=r.RHYa,h=r.INSa;p.items.forEach((v,b)=>{const m=h.items[b];m&&g.push({id:`${t}:rhy:${b}`,name:readStr(v.bytes,0,16),categoryId:null,categoryName:"Drum Kit",sourceFile:t,chunkType:"RHYa",modelId:p.modelId,itemSize:p.itemSize,reserved:p.reserved,bytes:v.bytes,checksum:v.checksum,insModelId:h.modelId,insItemSize:h.itemSize,insReserved:h.reserved,insBytes:m.bytes,insChecksum:m.checksum,included:!0})})}return{fileName:t,headerBytes:i,patches:f,drums:g,sourcePata:d,difa:c}}const PRJ_TRACKINFO_OFFSET=512,PRJ_TRACKINFO_SIZE=256,PRJ_TRACK_COUNT=8,PRJ_SLOT_COUNT=17,PRJ_CLIPINFO_OFFSET=4320,PRJ_CLIPINFO_SIZE=23616,PRJ_CLIPINFO_TRACKTYPE_OFFSET=18,PRJ_TONES_OFFSET=3216096,PRJ_TONE_SIZE=1632,PRJ_DRUM_SIZE=3328,PRJ_INST_SIZE=19008,PRJ_DRUMS_OFFSET=PRJ_TONES_OFFSET+PRJ_TRACK_COUNT*PRJ_SLOT_COUNT*PRJ_TONE_SIZE,PRJ_INSTS_OFFSET=PRJ_DRUMS_OFFSET+PRJ_TRACK_COUNT*PRJ_SLOT_COUNT*PRJ_DRUM_SIZE,PRJ_ITEM_MIN_SIZE=PRJ_INSTS_OFFSET+PRJ_TRACK_COUNT*PRJ_SLOT_COUNT*PRJ_INST_SIZE,PRJ_TRACKTYPE_SYNTH=0,PRJ_TRACKTYPE_DRUM=1,PRJ_TRACKTYPE_EMPTY=255,PRJ_SOURCE_TRACK=0,PRJ_SOURCE_CLIP=1,PRJ_TRACK_SLOT=16,PRJ_OUTPUT_MODEL_ID="ZCOR";function isProjectFileName(e){return/\.(mpj|prj|mvp)$/i.test(e||"")}function isClipFileName(e){return/\.mvc$/i.test(e||"")}function isProjectOrClipFileName(e){return isProjectFileName(e)||isClipFileName(e)}function parseProjectBuffer(e,t){const s=new Uint8Array(e),n=new DataView(e);if(s.length<32)throw new Error("File too short to be a valid project file.");const a=readStr(s,2,4);if(a!=="PRJ5")throw new Error(`"${t}" is not a valid project file (magic: "${a}")`);const o=n.getUint16(0,!0)+2;if(o<32||o>s.length)throw new Error(`"${t}" has an invalid project header length.`);const i=(o-16)/16;if(!Number.isInteger(i)||i<=0)throw new Error(`"${t}" has an invalid project chunk count.`);let u=null;for(let m=0;m<i;m++){const y=16+m*16;if(readStr(s,y,4)==="PRJa"){u={modelId:readStr(s,y+4,4),start:readU32LE(n,y+8),length:readU32LE(n,y+12)};break}}if(!u)throw new Error(`"${t}" has no PRJa chunk.`);const r=parseDataArray(s,n,u.start);if(r.items.length===0)throw new Error(`"${t}" PRJa chunk is empty.`);const c=r.items[0].bytes;if(c.length<PRJ_ITEM_MIN_SIZE)throw new Error(`"${t}" PRJa item is shorter than expected (0x${c.length.toString(16)}).`);const l=[];for(let m=0;m<PRJ_TRACK_COUNT;m++){const y=PRJ_TRACKINFO_OFFSET+m*PRJ_TRACKINFO_SIZE;l.push({trackType:c[y+4],source:c[y+5]})}function d(m,y){const M=PRJ_CLIPINFO_OFFSET+(m*PRJ_SLOT_COUNT+y)*PRJ_CLIPINFO_SIZE+PRJ_CLIPINFO_TRACKTYPE_OFFSET;return c[M]}const f=[],g=[];function p(m,y,M,E){return m+(M*PRJ_SLOT_COUNT+E)*y}function h(m,y){return y===PRJ_TRACK_SLOT?`Track ${m+1}`:`Track ${m+1} Clip ${y+1}`}function v(m,y){const M=p(PRJ_TONES_OFFSET,PRJ_TONE_SIZE,m,y),E=c.slice(M,M+PRJ_TONE_SIZE),T=readStr(E,0,16),P=E[16];f.push({id:`${t}:prj:pat:${m}:${y}`,name:T,categoryId:P,categoryName:PATCH_CATEGORIES.get(P)??`Unknown (${P})`,sourceFile:t,slotLabel:h(m,y),chunkType:"PATa",modelId:PRJ_OUTPUT_MODEL_ID,itemSize:PRJ_TONE_SIZE,reserved:0,bytes:E,checksum:0,included:!0,modelName:null})}function b(m,y){const M=p(PRJ_DRUMS_OFFSET,PRJ_DRUM_SIZE,m,y),E=p(PRJ_INSTS_OFFSET,PRJ_INST_SIZE,m,y),T=c.slice(M,M+PRJ_DRUM_SIZE),P=c.slice(E,E+PRJ_INST_SIZE),S=readStr(T,0,16);g.push({id:`${t}:prj:rhy:${m}:${y}`,name:S,categoryId:null,categoryName:"Drum Kit",sourceFile:t,slotLabel:h(m,y),chunkType:"RHYa",modelId:PRJ_OUTPUT_MODEL_ID,itemSize:PRJ_DRUM_SIZE,reserved:0,bytes:T,checksum:0,insModelId:PRJ_OUTPUT_MODEL_ID,insItemSize:PRJ_INST_SIZE,insReserved:0,insBytes:P,insChecksum:0,included:!0})}for(let m=0;m<PRJ_TRACK_COUNT;m++){const y=l[m];if(y.trackType!==PRJ_TRACKTYPE_SYNTH&&y.trackType!==PRJ_TRACKTYPE_DRUM)continue;const M=y.trackType===PRJ_TRACKTYPE_SYNTH?v:b;if(y.source===PRJ_SOURCE_TRACK)M(m,PRJ_TRACK_SLOT);else for(let E=0;E<PRJ_TRACK_SLOT;E++)d(m,E)!==PRJ_TRACKTYPE_EMPTY&&M(m,E)}return{fileName:t,headerBytes:buildRc001Header(),patches:f,drums:g,sourcePata:null,difa:null}}function parseClipBuffer(e,t){const s=new Uint8Array(e),n=new DataView(e);if(s.length<32)throw new Error("File too short to be a valid clip file.");const a=readStr(s,2,4);if(a!=="CLPT"&&a!=="CLPD")throw new Error(`"${t}" is not a valid clip file (magic: "${a}")`);const o=n.getUint16(0,!0)+2;if(o<32||o>s.length)throw new Error(`"${t}" has an invalid clip header length.`);const i=(o-16)/16;if(!Number.isInteger(i)||i<=0)throw new Error(`"${t}" has an invalid clip chunk count.`);const u=[];for(let d=0;d<i;d++){const f=16+d*16;u.push({typeId:readStr(s,f,4),modelId:readStr(s,f+4,4),start:readU32LE(n,f+8),length:readU32LE(n,f+12)})}const r=new Map(u.map(d=>[d.typeId,d])),c=[],l=[];if(a==="CLPT"){const d=r.get("PCMa");if(!d)throw new Error(`"${t}" CLPT has no PCMa chunk.`);const f=parseDataArray(s,n,d.start);f.items.forEach((g,p)=>{const h=g.bytes[16];c.push({id:`${t}:clip:pat:${p}`,name:readStr(g.bytes,0,16),categoryId:h,categoryName:PATCH_CATEGORIES.get(h)??`Unknown (${h})`,sourceFile:t,chunkType:"PATa",modelId:PRJ_OUTPUT_MODEL_ID,itemSize:f.itemSize,reserved:f.reserved,bytes:g.bytes,checksum:g.checksum??0,included:!0,modelName:null})})}else{const d=r.get("PCRa"),f=r.get("PCIa");if(!d)throw new Error(`"${t}" CLPD has no PCRa chunk.`);if(!f)throw new Error(`"${t}" CLPD has no PCIa chunk.`);const g=parseDataArray(s,n,d.start),p=parseDataArray(s,n,f.start);if(g.items.length!==p.items.length)throw new Error(`"${t}" PCRa/PCIa item counts differ.`);g.items.forEach((h,v)=>{const b=p.items[v];l.push({id:`${t}:clip:rhy:${v}`,name:readStr(h.bytes,0,16),categoryId:null,categoryName:"Drum Kit",sourceFile:t,chunkType:"RHYa",modelId:PRJ_OUTPUT_MODEL_ID,itemSize:g.itemSize,reserved:g.reserved,bytes:h.bytes,checksum:h.checksum??0,insModelId:PRJ_OUTPUT_MODEL_ID,insItemSize:p.itemSize,insReserved:p.reserved,insBytes:b.bytes,insChecksum:b.checksum??0,included:!0})})}return{fileName:t,headerBytes:buildRc001Header(),patches:c,drums:l,sourcePata:null,difa:null}}function writeStr4(e,t,s){for(let n=0;n<4;n++)e[t+n]=n<s.length?s.charCodeAt(n):32}function patPatchToMdlaZencoreItem(e){const t=new Uint8Array(2048);return t.set(e.bytes.slice(0,1632)),t[2045]=1,t[2046]=1,{bytes:t,checksum:e.checksum}}function padItemData(e,t){if(e.length>=t)return e.slice(0,t);const s=new Uint8Array(t);return s.set(e),s}function normalizeMdlaItemForOutput(e){const t=new Uint8Array(2048);return t.set(e.subarray(0,Math.min(e.length,2048))),t[2045]===1&&t[2046]===0&&(t[2046]=1),t[2045]===0&&t[2046]===0&&(t[2045]=1,t[2046]=1),t}function buildChunkBuffer({itemSize:e,reserved:t,items:s,rawBytes:n}){if(n)return n;const a=s.length,i=16+a*4,u=new Uint8Array(i+a*e),r=new DataView(u.buffer);return r.setUint32(0,a,!0),r.setUint32(4,e,!0),r.setUint32(8,i,!0),r.setUint32(12,t,!0),s.forEach((c,l)=>{r.setUint32(16+l*4,c.checksum??0,!0);let d=padItemData(c.bytes,e);e===2048&&(d=normalizeMdlaItemForOutput(d)),u.set(d,i+l*e)}),u}function serializeSvzChunks(e,t){const s=e.length,n=new Uint8Array(16);n.set(t.slice(0,16)),n[4]=s,n[5]=s;const a=e.map(l=>buildChunkBuffer(l)),o=new Uint8Array(s*16),i=new DataView(o.buffer);let u=16+s*16;e.forEach((l,d)=>{const f=d*16;writeStr4(o,f,l.typeId),writeStr4(o,f+4,l.modelId),i.setUint32(f+8,u,!0),i.setUint32(f+12,a[d].length,!0),u+=a[d].length});const r=new Uint8Array(u);r.set(n,0),r.set(o,16);let c=16+s*16;for(const l of a)r.set(l,c),c+=l.length;return r}function buildSvzBuffer(e,t,s,n,a=null,o=null){const i=[];o&&i.push({typeId:"DIFa",modelId:o.modelId,rawBytes:o.rawBytes});const u=e.filter(c=>c.included);if(u.length>0)if(n){const c=u[0];i.push({typeId:"PATa",modelId:c.modelId,itemSize:1632,reserved:c.reserved,items:u.map(l=>({bytes:l.bytes.slice(0,1632),checksum:l.checksum}))})}else{const c=u.filter(d=>d.chunkType==="MDLa"),l=u.filter(d=>d.chunkType==="PATa");if(c.length>0&&l.length>0){const d=c[0],f=[...l.map(patPatchToMdlaZencoreItem),...c.map(g=>({bytes:g.bytes,checksum:g.checksum}))];i.push({typeId:"MDLa",modelId:d.modelId,itemSize:2048,reserved:d.reserved,items:f})}else if(c.length>0){const d=c[0];if(i.push({typeId:"MDLa",modelId:d.modelId,itemSize:d.itemSize,reserved:d.reserved,items:c.map(f=>({bytes:f.bytes,checksum:f.checksum}))}),a){const f=c.filter(g=>g.modelName===null);f.length>0&&i.push({typeId:"PATa",modelId:a.modelId,itemSize:1632,reserved:a.reserved,items:f.map(g=>({bytes:g.bytes.slice(0,1632),checksum:g.checksum}))})}}else{const d=l[0];i.push({typeId:"MDLa",modelId:d.modelId,itemSize:2048,reserved:d.reserved,items:l.map(patPatchToMdlaZencoreItem)})}}const r=t.filter(c=>c.included);if(r.length>0){const c=r[0];i.push({typeId:"RHYa",modelId:c.modelId,itemSize:c.itemSize,reserved:c.reserved,items:r.map(l=>({bytes:l.bytes,checksum:l.checksum}))}),i.push({typeId:"INSa",modelId:c.insModelId,itemSize:c.insItemSize,reserved:c.insReserved,items:r.map(l=>({bytes:l.insBytes,checksum:l.insChecksum}))})}return i.length===0?null:(i.sort((c,l)=>CHUNK_ORDER.indexOf(c.typeId)-CHUNK_ORDER.indexOf(l.typeId)),serializeSvzChunks(i,s))}const state={page:0,activeModal:null,files:[],allPatches:[],allDrums:[],sortMode:"alpha",filterText:"",filterCat:"",removeModel:!1,outputMode:"process",fanFolders:!0,maxPatchesPerFile:MAX_PER_FILE,outputName:""};function syncFlatLists(){state.allPatches=state.files.flatMap(e=>e.patches),state.allDrums=state.files.flatMap(e=>e.drums)}function escapeRegex(e){return e.replace(/[\\^$+?()[\]{}|]/g,"\\$&")}function nameMatchesSearch(e,t){const s=t.trim().toLowerCase();if(!s)return!0;const n=e.toLowerCase();if(!s.includes("*"))return n.includes(s);const a=s.split("*").map(o=>escapeRegex(o));return new RegExp(`^${a.join(".*")}$`).test(n)}function matchesFilter(e){const t=state.filterText.trim(),s=state.filterCat;if(t&&!nameMatchesSearch(e.name,t))return!1;if(s!==""){if(s==="__drum__")return e.chunkType==="RHYa";if(s.startsWith("__model:")){const n=s.slice(8);return e.modelName===n}if(e.categoryId===null||String(e.categoryId)!==s)return!1}return!0}function getVisibleItems(){const e=[...state.allPatches,...state.allDrums];let t;return state.sortMode==="alpha"?t=[...e].sort((n,a)=>n.name.localeCompare(a.name)):state.sortMode==="category"?t=[...e].sort((n,a)=>{const o=n.chunkType==="RHYa"?"\xFFDrum Kits":n.categoryName,i=a.chunkType==="RHYa"?"\xFFDrum Kits":a.categoryName;return o!==i?o.localeCompare(i):n.name.localeCompare(a.name)}):state.sortMode==="model"?t=[...e].sort((n,a)=>{const o=n.chunkType==="RHYa"?"\xFF":n.modelName??"",i=a.chunkType==="RHYa"?"\xFF":a.modelName??"";return o!==i?o.localeCompare(i):n.name.localeCompare(a.name)}):t=e,state.filterText.trim()||state.filterCat!==""?t.filter(matchesFilter):t}function getFilteredItems(){return getVisibleItems()}function getCategories(){const e=new Map,t=new Set;for(const n of state.allPatches)e.has(n.categoryId)||e.set(n.categoryId,n.categoryName),n.modelName&&t.add(n.modelName);const s=state.allDrums.length>0;return{cats:e,models:t,hasDrums:s}}function totalSelected(){return state.allPatches.filter(e=>e.included).length+state.allDrums.filter(e=>e.included).length}function getSelectionSummaryHtml(){const e=state.allPatches.filter(a=>a.included).length,t=state.allDrums.filter(a=>a.included).length,s=state.allPatches.length,n=state.allDrums.length;return[`<span style="font-weight:400;color:var(--accent);text-transform:none;letter-spacing:0;white-space:nowrap;">${e} / ${s} patches</span>`,`<span style="font-weight:400;color:var(--accent);text-transform:none;letter-spacing:0;white-space:nowrap;">${t} / ${n} drum kits</span>`].join(" \xB7 ")}function getMaxPatchesPerFile(){const e=Number(state.maxPatchesPerFile);return Number.isFinite(e)?Math.max(1,Math.min(MAX_PER_FILE,Math.floor(e))):MAX_PER_FILE}function stripSvzExtension(e){return String(e||"").replace(/\.(svz|mpj|prj|mvp)$/i,"")}function getOutputNameMode(){return state.outputMode==="fan"||state.outputMode==="process"&&state.files.length>1?"prefix":"filename"}function getOutputNameFieldMeta(){return getOutputNameMode()==="prefix"?{label:"Filename Prefix",desc:"Added to the start of generated file names, and folder names in Fan mode.",placeholder:"Optional prefix"}:{label:"Filename",desc:"Base file name to use for the generated output.",placeholder:state.outputMode==="merge"?"merged":"output"}}function getSanitizedOutputStem(){return sanitizeName(stripSvzExtension(state.outputName).trim())}function splitIntoPatchGroups(e,t,s=!1){const n=[];for(let a=0;a<e.length;a+=t)n.push(e.slice(a,Math.min(a+t,e.length)));return n.length===0&&s&&n.push([]),n}function sanitizeName(e){return e.replace(/[^A-Za-z0-9_-]/g,"")}function buildRc001Header(){const e=new Uint8Array(16);return e.set(DEFAULT_HEADER.slice(0,6)),e.set(DEFAULT_PLATFORM_MARKER.bytes,6),e}async function generateOutput(){const e=[],t=getMaxPatchesPerFile(),s=getSanitizedOutputStem(),n=getOutputNameMode();function a(o,i,u,r,c=null,l=null){const d=buildSvzBuffer(i,u,r,state.removeModel,c,l);d&&e.push({path:o,data:d})}if(state.outputMode==="process")for(const o of state.files){const i=o.patches.filter(f=>f.included),u=o.drums.filter(f=>f.included);if(i.length===0&&u.length===0)continue;const r=o.headerBytes,c=splitIntoPatchGroups(i,t,u.length>0),l=stripSvzExtension(o.fileName),d=n==="prefix"?`${s}${l}`||l:s||l;c.forEach((f,g)=>{const p=c.length>1?`_${String(g+1).padStart(2,"0")}`:"",h=g===0?u:[],v=f.map(m=>({...m,included:!0})),b=h.map(m=>({...m,included:!0}));a(`${d}${p}.svz`,v,b,r,o.sourcePata,o.difa)})}else if(state.outputMode==="merge"){const o=state.allPatches.filter(l=>l.included),i=state.allDrums.filter(l=>l.included),u=s||stripSvzExtension(state.files[0]?.fileName??"merged"),r=buildRc001Header(),c=splitIntoPatchGroups(o,t,i.length>0);c.forEach((l,d)=>{const f=d===0?i:[],g=c.length>1?`_${String(d+1).padStart(2,"0")}`:"",p=l.map(v=>({...v,included:!0})),h=f.map(v=>({...v,included:!0}));a(`${u}${g}.svz`,p,h,r)})}else if(state.outputMode==="fan"){const o=state.allPatches.filter(c=>c.included),i=state.allDrums.filter(c=>c.included),u=buildRc001Header(),r=new Map;for(const c of o){const l=c.categoryId??-1;r.has(l)||r.set(l,[]),r.get(l).push(c)}for(const[c,l]of r){const d=PATCH_CATEGORIES.get(c)??`Unknown${c}`,f=sanitizeName(d)||`Cat${c}`,g=`${s}${f}`||f;for(let p=0;p<l.length;p+=t){const h=l.slice(p,p+t).map(m=>({...m,included:!0})),v=l.length>t?`_${String(Math.floor(p/t)+1).padStart(2,"0")}`:"",b=state.fanFolders?`${g}/${g}${v}.svz`:`${g}${v}.svz`;a(b,h,[],u)}}if(i.length>0){const c=`${s}DrumKits`||"DrumKits",l=state.fanFolders?`${c}/${c}.svz`:`${c}.svz`;a(l,[],i.map(d=>({...d,included:!0})),u)}}return e}async function downloadOutput(){const e=document.getElementById("export-btn");e&&(e.disabled=!0,e.textContent="Generating\u2026");try{const t=await generateOutput();if(t.length===0){alert("No output files generated. Make sure at least one patch is included.");return}if(t.length===1&&!t[0].path.includes("/")){const a=new Blob([t[0].data],{type:"application/octet-stream"});triggerDownload(a,t[0].path);return}const s=new JSZip;for(const a of t)s.file(a.path,a.data);const n=await s.generateAsync({type:"blob",compression:"STORE"});triggerDownload(n,"svz_output.zip")}catch(t){alert("Export failed: "+t.message)}finally{e&&(e.disabled=!1,e.textContent="Export")}}function triggerDownload(e,t){const s=URL.createObjectURL(e),n=document.createElement("a");n.href=s,n.download=t,n.click(),setTimeout(()=>URL.revokeObjectURL(s),1e3)}function canAdvance(){return state.page===0?state.files.length>0:state.page===1?totalSelected()>0:!1}function nextPage(){if(state.page===2){downloadOutput();return}canAdvance()&&(state.page++,render(),document.querySelector(".page-content")?.scrollTo(0,0))}function prevPage(){state.page!==0&&(state.page--,render(),document.querySelector(".page-content")?.scrollTo(0,0))}async function loadFiles(e){const t=[];for(const s of e){const n=/\.svz$/i.test(s.name),a=isProjectFileName(s.name);if(!n&&!a){t.push(`${s.name}: not an SVZ or project file`);continue}if(!state.files.some(o=>o.fileName===s.name))try{const o=await s.arrayBuffer(),i=a?parseProjectBuffer(o,s.name):parseSvzBuffer(o,s.name);state.files.push(i)}catch(o){t.push(`${s.name}: ${o.message}`)}}syncFlatLists(),t.length&&alert(`Errors loading files:
+`+t.join(`
+`)),render()}function removeFile(e){state.files=state.files.filter(t=>t.fileName!==e),syncFlatLists(),render()}function removeAllFiles(){state.files.length!==0&&(state.files=[],syncFlatLists(),state.page=0,render())}function renderPage1(){const e=state.files.map(t=>{const s=t.patches.length,n=t.drums.length,a=[];return s&&a.push(`${s} patch${s!==1?"es":""}`),n&&a.push(`${n} drum kit${n!==1?"s":""}`),`
+      <div class="file-item">
+        <div class="file-item-info">
+          <div class="file-item-name">${escHtml(t.fileName)}</div>
+          <div class="file-item-meta">${a.join(" \xB7 ")||"Empty"}</div>
+        </div>
+        <button class="file-item-remove" onclick="removeFile('${escAttr(t.fileName)}')" title="Remove">\u2715</button>
+      </div>
+    `}).join("");return`
+    <div class="intro-block">
+      <h1 class="intro-title">Zenology Patch File Tool</h1>
+      <p class="intro-description">
+         <a class="link-btn" href="#" type="button" onclick="openAboutModal()">Build #1</a>. Drop in one or more SVZ files or MC/MV project files to inspect their patches, filter what you want to keep,
+        and export processed, merged, or category-split outputs. <a class="link-btn" href="#" type="button" onclick="openAboutModal()">About this tool</a>
+      </p>      
+    </div>
+
+    <div
+      class="drop-zone"
+      id="drop-zone"
+      onclick="document.getElementById('file-input').click()"
+    >
+      <div class="drop-zone-icon">\u{1F4C2}</div>
+      <div class="drop-zone-text">Drag &amp; drop SVZ or project files here</div>
+      <div class="drop-zone-sub">.svz, .mpj, .prj, .mvp \u2014 or tap to browse</div>
+    </div>
+    <input type="file" id="file-input" accept=".svz,.mpj,.prj,.mvp" multiple>
+
+    ${state.files.length>0?`
+      <div class="card">
+        <div class="file-list-header">
+          <div class="card-title" style="margin:0;">Loaded Files (${state.files.length})</div>
+          <button type="button" class="toolbar-btn danger" onclick="removeAllFiles()" title="Remove all loaded files">Remove all</button>
+        </div>
+        <div class="file-list">${e}</div>
+      </div>
+    `:""}
+  `}function renderPage2(){const{cats:e,models:t,hasDrums:s}=getCategories(),n=[...e.entries()].sort((r,c)=>r[0]-c[0]).map(([r,c])=>`<option value="${r}" ${state.filterCat===String(r)?"selected":""}>${escHtml(c)}</option>`).join(""),a=[...t].sort().map(r=>{const c=`__model:${r}`;return`<option value="${escAttr(c)}" ${state.filterCat===c?"selected":""}>Model: ${escHtml(r)}</option>`}).join(""),o=s?`<option value="__drum__" ${state.filterCat==="__drum__"?"selected":""}>Drum Kit</option>`:"",i=getVisibleItems();let u="";if(state.sortMode==="file"||state.sortMode==="model"||state.sortMode==="category"){const r=l=>state.sortMode==="file"?l.sourceFile:state.sortMode==="category"?l.chunkType==="RHYa"?"Drum Kits":l.categoryName:l.chunkType==="RHYa"?"Drum Kits":l.modelName??"ZenCore",c=new Map;for(const l of i){const d=r(l);c.has(d)||c.set(d,[]),c.get(d).push(l)}for(const[l,d]of c)u+=`<div class="section-header">${escHtml(l)}</div>`,u+=d.map(renderPatchItem).join("")}else u=i.map(renderPatchItem).join("");return`
+    <div class="card" style="padding:10px 14px;">
+      <div class="sort-controls">
+        <span class="card-title sort-controls-label">Sort:</span>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="sort" value="alpha" ${state.sortMode==="alpha"?"checked":""} onchange="setSortMode('alpha')">
+            <span class="radio-dot"></span>Alpha
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="sort" value="file" ${state.sortMode==="file"?"checked":""} onchange="setSortMode('file')">
+            <span class="radio-dot"></span>File
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="sort" value="category" ${state.sortMode==="category"?"checked":""} onchange="setSortMode('category')">
+            <span class="radio-dot"></span>Category
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="sort" value="model" ${state.sortMode==="model"?"checked":""} onchange="setSortMode('model')">
+            <span class="radio-dot"></span>Model
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Filter &amp; Search</div>
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <input class="search-input" type="text" placeholder="Search patches\u2026" value="${escAttr(state.filterText)}"
+            id="search-input" autocomplete="off" oninput="onSearchInput(this.value)">
+          <button type="button" class="search-clear-btn" id="search-clear-btn" onclick="clearFilterText()" aria-label="Clear search"
+            ${state.filterText.trim()?"":"hidden"}>\u2715</button>
+        </div>
+        <select class="cat-select" onchange="setFilterCat(this.value)">
+          <option value="" ${state.filterCat===""?"selected":""}>All categories</option>
+          ${n}${a}${o}
+        </select>
+      </div>
+      <div class="search-actions">
+        <button class="info-btn" type="button" onclick="openSearchActionsModal()" aria-label="About filter selection actions">i</button>
+        <button class="toolbar-btn" onclick="applySearch(true)" title="Include visible patches">Include visible</button>
+        <button class="toolbar-btn danger" onclick="applySearch(false)" title="Exclude visible patches">Exclude visible</button>
+        <button class="toolbar-btn" onclick="onlyVisibleSelection()" title="Select everything matching the filter; deselect everything else">Only visible</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div class="card-title" style="margin:0;">
+          Selection
+        </div>
+        <div style="flex:1;">
+          ${getSelectionSummaryHtml()}
+        </div>
+        <button class="toolbar-btn" onclick="selectAll(true)">Select All</button>
+        <button class="toolbar-btn danger" onclick="selectAll(false)">Select None</button>
+      </div>
+      <div class="patch-list" id="patch-list">
+        ${u||'<div class="empty-state">No patches loaded</div>'}
+      </div>
+    </div>
+  `}function renderPatchItem(e){const t=e.chunkType==="RHYa",s=t?null:e.modelName??"ZenCore",o=(s?`<span class="patch-badge model">${escHtml(s)}</span>`:"")||(t?'<span class="patch-badge drum">Drum Kit</span>':""),i=t?"Drum Kit":s,u=i!=null?patchItemAccentAttrs(i):"";return`
+    <div class="patch-item ${e.included?"included":"excluded"}" data-patch-id="${escAttr(e.id)}"${u}>
+      <div class="patch-toggle"></div>
+      <div class="patch-info">
+        <input class="patch-name patch-name-input" type="text"
+          value="${escAttr(e.name)}" maxlength="16" tabindex="-1"
+          autocomplete="off" spellcheck="false" title="Tap to rename">
+        <div class="patch-meta">
+          ${t?`<span class="patch-category-name">${escHtml(e.categoryName)}</span>`:`<span class="patch-category-name patch-category-btn" title="Click to change category">${escHtml(e.categoryName)}</span>`}
+          ${(()=>{const c=[(state.sortMode==="alpha"||state.sortMode==="model"||state.sortMode==="category")&&state.files.length>1?e.sourceFile:"",e.slotLabel||""].filter(Boolean).join(" ");return c?`<span class="patch-source-file">${escHtml(c)}</span>`:""})()}
+        </div>
+      </div>
+      ${o}
+    </div>
+  `}function renderPage3(){const e=state.allPatches.filter(r=>r.included),t=state.allDrums.filter(r=>r.included),s=state.allPatches.some(r=>r.modelName!==null&&r.modelName!==void 0),n=e.filter(r=>r.modelName===null||r.modelName===void 0).length,a=e.filter(r=>r.modelName!==null&&r.modelName!==void 0).length,o=getOutputNameFieldMeta(),i=getMaxPatchesPerFile(),u={process:"Output the same files, each filtered to only your selected patches.",merge:"Combine everything into one output file.",fan:"One file per patch category, each placed in a folder named after that category."};return`
+  <div class="card">
+      <div class="card-title">Summary</div>
+      ${n>0&&a>0?`
+        <div class="summary-stat">
+          <span>Total Selected Patches</span><span class="val">${e.length}</span>
+        </div>`:""}
+      ${n>0?`
+        <div class="summary-stat">
+          <span>Selected ZenCore Patches</span><span class="val">${n}</span>
+        </div>
+      `:""}
+       ${a>0?`
+        <div class="summary-stat">
+          <span>Selected Model Patches</span><span class="val">${a}</span>
+        </div>
+      `:""}
+       ${t.length>0?`
+        <div class="summary-stat">
+          <span>Selected Drum Kits</span><span class="val">${t.length}</span>
+        </div>
+      `:""}
+      ${state.outputMode==="fan"&&Math.ceil(e.length/i)>1?`
+        <div class="summary-stat">
+          <span>Output files</span><span class="val">${Math.ceil(e.length/i)||1}</span>
+        </div>
+      `:""}
+    </div>
+    <div class="card">
+      <div class="card-title">Export Options</div>
+      ${s?`
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label toggle-label-with-info" style="color:var(--warn)">
+              <span>Convert Model to ZenCore</span>
+              <button class="info-btn" type="button" onclick="openModal('modelChop')" aria-label="More information about Convert Model">i</button>
+            </div>
+            <div class="toggle-desc">Attempt conversion to standard Zencore patches (limitations apply)</div>
+          </div>
+          <div class="toggle-switch ${state.removeModel?"on":""}" onclick="toggleRemoveModel()"></div>
+        </div>
+      `:""}
+
+      <div class="export-options-grid ${s?"with-divider":""}">
+        <label class="export-field">
+          <span class="export-field-label">Maximum Patches Per File</span>
+          <input
+            class="export-input"
+            type="number"
+            min="1"
+            max="${MAX_PER_FILE}"
+            step="1"
+            value="${i}"
+            onchange="setMaxPatchesPerFile(this.value)"
+          >
+          <span class="export-field-help">Used when splitting large outputs into multiple files.</span>
+        </label>
+
+        <label class="export-field">
+          <span class="export-field-label">${o.label}</span>
+          <input
+            class="export-input"
+            type="text"
+            maxlength="40"
+            value="${escAttr(state.outputName)}"
+            placeholder="${escAttr(o.placeholder)}"
+            oninput="setOutputName(this.value)"
+          >
+          <span class="export-field-help">${o.desc}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Output Mode</div>
+      <div class="mode-cards">
+        ${["process","merge","fan"].map(r=>`
+          <label class="mode-card">
+            <input type="radio" name="outputMode" value="${r}" ${state.outputMode===r?"checked":""}
+              onchange="setOutputMode('${r}')">
+            <div class="mode-radio"></div>
+            <div class="mode-card-info">
+              <div class="mode-title">${r.charAt(0).toUpperCase()+r.slice(1)}</div>
+              <div class="mode-desc">${u[r]}</div>
+              ${r==="fan"?`
+                <div class="mode-option-extra ${state.outputMode==="fan"?"active":""}">
+                  <div class="toggle-row">
+                    <div class="toggle-info">
+                      <div class="toggle-label toggle-label-with-info">
+                        <span>Create in Folders</span>
+                        <button class="info-btn" type="button" onclick="event.preventDefault(); event.stopPropagation(); openModal('fanFolders')" aria-label="More information about Create in Folders">i</button>
+                      </div>
+                      <div class="toggle-desc">Place each category export inside its own folder in the output zip.</div>
+                    </div>
+                    <div class="toggle-switch ${state.fanFolders?"on":""}" onclick="event.preventDefault(); event.stopPropagation(); toggleFanFolders(true)"></div>
+                  </div>
+                </div>
+              `:""}
+            </div>
+          </label>
+        `).join("")}
+      </div>
+    </div>
+
+  `}const PAGE_TITLES=["Load Files","Select Patches","Export"];function getModalContent(){return state.activeModal==="about"?{kicker:"About",title:"What this page does",body:`
+        <p>
+          This tool reads Roland SVZ/MPJ/PRJ sound files in the browser, lets you review included patches and drum kits,
+          and exports a new SVZ set based on your selections. (Note cannot work with tones or patches dependant on samples)
+        </p>
+        <p>
+          Nothing is uploaded anywhere. File parsing, filtering, and export all happen locally in your browser.
+        </p>
+        <p>
+          Use step 1 to load files, step 2 to choose what stays, and step 3 to export the result in the format you want.
+        </p>
+        <p>
+          Do not loose your original files!
+        </p>
+        <p>
+          Problems, comments etc at <a class="link-btn" href="https://discord.gg/gP3tmPpf55" target="_blank">Discord</a> where we are pulling apart files and sysex. More tools and github links at <a class="link-btn" href="https://splunge.foo" target="_blank">Splunge.foo</a>.
+          </p>
+      `}:state.activeModal==="fanFolders"?{kicker:"Fan Mode",title:"Create in Folders",body:`
+        <p>
+          When enabled, Fan mode places each category output inside its own folder in the exported zip,
+          for example <code>AcPiano/AcPiano.svz</code>. 
+        </p>
+        <p>
+          If you have a lot of patches, this will be faster to navigate on synth hardware like the MC-707 as it avoids waiting for all the files to be scanned every time you change file.
+          </p>
+        <p>
+          When disabled, Fan outputs are written directly at the top level instead, for example
+          <code>AcPiano.svz</code> and <code>DrumKits.svz</code>.
+        </p>
+      `}:state.activeModal==="modelChop"?{kicker:"Model Chop",title:"Convert Model to ZenCore",body:`
+        <p>
+          This converts selected MDLa model patches into standard PATa-style Zencore patches by keeping only the
+          first <code>0x660</code> bytes of each model patch.
+        </p>
+        <p>
+          Does not work for all models (JD-800, N/Zyme, Vocal Designer certainly don't) and problably for some patches, due to non compatible settings.
+        </p>
+      `}:state.activeModal==="searchActions"?{kicker:"Filter &amp; Search",title:"Selection actions",body:`
+        <p>
+          In the search box, <code>*</code> is a wildcard matching any characters. Examples: <code>*pad*</code> matches names containing \u201Cpad\u201D;
+          <code>lead*</code> matches names starting with \u201Clead\u201D. With no <code>*</code>, search behaves as a simple substring match (case-insensitive).
+        </p>
+        <p>
+          <strong>Include visible</strong> turns <em>on</em> selection for every patch and drum kit that is currently visible, i.e. anything matching the
+          current search box and category (or model / drum) filter. Anything that is not visible is left unchanged.
+        </p>
+        <p>
+          <strong>Exclude visible</strong> as above, but turns <em>off</em> selection for everything that matches the current filter.
+        </p>
+        <p>
+          <strong>Only visible</strong> sets selection to match the filter: it turns <em>on</em> every patch and drum kit that matches the current search and category,
+          and turns <em>off</em> everything that does not. Use it to make your selection exactly the narrowed list.
+        </p>
+      `}:null}function render(){const e=document.getElementById("root"),t=state.page===2,s=getModalContent();e.innerHTML=`
+    <div class="page-header">
+      <div class="header-nav-left">
+        ${state.page>0?'<button class="btn btn-back" onclick="prevPage()">\u2190 Back</button>':""}
+      </div>
+      <div class="steps">
+        ${[0,1,2].map(n=>`
+          <div class="step ${n===state.page?"active":n<state.page?"done":""}">
+            <div class="step-dot">${n<state.page?"\u2713":n+1}</div>
+            <div class="step-label">${["Files","Patches","Export"][n]}</div>
+          </div>
+          ${n<2?`<div class="step-line ${n<state.page?"done":""}"></div>`:""}
+        `).join("")}
+      </div>
+      <div class="header-nav-right">
+        ${t?'<button class="btn btn-export" id="export-btn" onclick="downloadOutput()">Export</button>':`<button class="btn btn-next" onclick="nextPage()" ${canAdvance()?"":"disabled"}>Next \u2192</button>`}
+      </div>
+    </div>
+
+    <div class="page-content">
+      ${[renderPage1,renderPage2,renderPage3][state.page]()}
+    </div>
+
+    ${s?`
+      <div class="modal-backdrop" onclick="closeModal()">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <div class="modal-kicker">${s.kicker}</div>
+              <h2 class="modal-title" id="modal-title">${s.title}</h2>
+            </div>
+            <button class="modal-close" type="button" onclick="closeModal()" aria-label="Close dialog">\u2715</button>
+          </div>
+          <div class="modal-body">${s.body}</div>
+        </div>
+      </div>
+    `:""}
+  `,attachListeners()}function patchIdFromEvent(e){return e.target.closest("[data-patch-id]")?.dataset.patchId??null}function attachListeners(){const e=document.getElementById("drop-zone"),t=document.getElementById("file-input");e&&(e.addEventListener("dragover",n=>{n.preventDefault(),e.classList.add("drag-over")}),e.addEventListener("dragleave",()=>e.classList.remove("drag-over")),e.addEventListener("drop",n=>{n.preventDefault(),e.classList.remove("drag-over"),loadFiles(n.dataTransfer.files)})),t&&t.addEventListener("change",n=>loadFiles(n.target.files));const s=document.getElementById("patch-list");s&&(s.addEventListener("click",n=>{const a=patchIdFromEvent(n);if(a){if(n.target.closest(".patch-toggle")){togglePatch(a);return}if(n.target.closest(".patch-category-btn")){openCategoryPicker(n);return}}}),s.addEventListener("focusin",n=>{n.target.matches(".patch-name-input")&&startPatchRename(n)}),s.addEventListener("focusout",n=>{n.target.matches(".patch-name-input")&&commitPatchRename(n)}),s.addEventListener("keydown",n=>{n.target.matches(".patch-name-input")&&patchRenameKey(n)}),s.addEventListener("input",n=>{n.target.matches(".patch-name-input")&&filterPatchNameInput(n)}))}function togglePatch(e){const t=state.allPatches.find(n=>n.id===e)||state.allDrums.find(n=>n.id===e);if(!t)return;t.included=!t.included;for(const n of state.files){const a=[...n.patches,...n.drums].find(o=>o.id===e);if(a){a.included=t.included;break}}const s=document.querySelector(`[data-patch-id="${CSS.escape(e)}"]`);s&&(s.classList.toggle("included",t.included),s.classList.toggle("excluded",!t.included)),updateSelectionCount()}function renderPatchListOnly(){closeCategoryPicker();const e=getVisibleItems(),t=document.getElementById("patch-list");if(t)if(state.sortMode==="file"||state.sortMode==="model"||state.sortMode==="category"){const s=o=>state.sortMode==="file"?o.sourceFile:state.sortMode==="category"?o.chunkType==="RHYa"?"Drum Kits":o.categoryName:o.chunkType==="RHYa"?"Drum Kits":o.modelName??"ZenCore",n=new Map;for(const o of e){const i=s(o);n.has(i)||n.set(i,[]),n.get(i).push(o)}let a="";for(const[o,i]of n)a+=`<div class="section-header">${escHtml(o)}</div>`,a+=i.map(renderPatchItem).join("");t.innerHTML=a||'<div class="empty-state">No matches</div>'}else t.innerHTML=e.map(renderPatchItem).join("")||'<div class="empty-state">No matches</div>';updateSelectionCount()}function updateSelectionCount(){const e=document.getElementById("patch-list")?.closest(".card")?.querySelector(".card-title");e&&(e.innerHTML=`Selection ${getSelectionSummaryHtml()}`);const t=document.querySelector(".btn-next");t&&(t.disabled=!canAdvance())}function setSortMode(e){state.sortMode=e,renderPatchListOnly()}let _searchTimer=null;function onSearchInput(e){const t=document.getElementById("search-clear-btn");t&&(t.hidden=!e.trim()),clearTimeout(_searchTimer),_searchTimer=setTimeout(()=>{state.filterText=e,renderPatchListOnly()},280)}function clearFilterText(){state.filterText="";const e=document.getElementById("search-input");e&&(e.value="");const t=document.getElementById("search-clear-btn");t&&(t.hidden=!0),renderPatchListOnly()}function setFilterCat(e){state.filterCat=e,renderPatchListOnly()}function selectAll(e){for(const t of state.allPatches)t.included=e;for(const t of state.allDrums)t.included=e;for(const t of state.files){for(const s of t.patches)s.included=e;for(const s of t.drums)s.included=e}renderPatchListOnly()}function applySearch(e){const t=getFilteredItems();for(const s of t){s.included=e;for(const n of state.files){const a=[...n.patches,...n.drums].find(o=>o.id===s.id);if(a){a.included=e;break}}}renderPatchListOnly()}function onlyVisibleSelection(){const e=getVisibleItems(),t=new Set(e.map(n=>n.id)),s=(n,a)=>{n.included=a;for(const o of state.files){const i=[...o.patches,...o.drums].find(u=>u.id===n.id);if(i){i.included=a;break}}};for(const n of state.allPatches)s(n,t.has(n.id));for(const n of state.allDrums)s(n,t.has(n.id));renderPatchListOnly()}function toggleRemoveModel(){state.removeModel=!state.removeModel,render()}function setMaxPatchesPerFile(e){const t=Number(e);state.maxPatchesPerFile=Number.isFinite(t)?t:MAX_PER_FILE,render()}function setOutputName(e){state.outputName=e}function setOutputMode(e){state.outputMode=e;const t=document.querySelector(".page-content");t&&(t.innerHTML=renderPage3())}function toggleFanFolders(e=!1){e&&(state.outputMode="fan"),state.fanFolders=!state.fanFolders,render()}function openModal(e){state.activeModal=e,render()}function openAboutModal(){openModal("about")}function openSearchActionsModal(){openModal("searchActions")}function closeModal(){state.activeModal&&(state.activeModal=null,render())}function filterPatchNameInput(e){const t=e.target,s=t.selectionStart,n=t.value;let a="",o=0;for(let i=0;i<n.length;i++){const u=n.charCodeAt(i);u>=32&&u<=127?a+=n[i]:i<s&&o++}if(a!==n){t.value=a;const i=s-o;t.setSelectionRange(i,i)}}function startPatchRename(e){const t=e.target;t.classList.contains("editing")||(t.classList.add("editing"),t.dataset.origValue=t.value,t.select())}function commitPatchRename(e){const t=e.target;if(!t.classList.contains("editing"))return;t.classList.remove("editing");const s=patchIdFromEvent(e);if(!s)return;const n=t.value,a=state.allPatches.find(o=>o.id===s)||state.allDrums.find(o=>o.id===s);if(!(!a||n===a.name)){a.name=n;for(let o=0;o<16;o++)a.bytes[o]=o<n.length?n.charCodeAt(o):0;for(const o of state.files){const i=[...o.patches,...o.drums].find(u=>u.id===s);if(i){i.name=n;break}}}}function patchRenameKey(e){e.key==="Enter"?(e.preventDefault(),e.target.blur()):e.key==="Escape"?(e.stopPropagation(),e.target.value=e.target.dataset.origValue??e.target.value,e.target.blur()):e.stopPropagation()}let _catPickerEscHandler=null;function openCategoryPicker(e){closeCategoryPicker(),e.stopPropagation();const t=patchIdFromEvent(e),s=e.target,n=t&&state.allPatches.find(v=>v.id===t);if(!n)return;const a=document.createElement("div");a.id="cat-picker-backdrop",a.addEventListener("click",()=>closeCategoryPicker()),document.body.appendChild(a);const o=document.createElement("div");o.id="cat-picker",o.className="cat-picker";let i="";for(const[v,b]of PATCH_CATEGORIES){const m=v===n.categoryId;i+=`<div class="cat-picker-item${m?" current":""}" data-cat-id="${v}">${escHtml(b)}</div>`}o.innerHTML=i,document.body.appendChild(o);const u=(s.closest(".patch-category-btn")??s).getBoundingClientRect(),r=o.offsetWidth,c=o.offsetHeight,l=8,d=u.right+6,f=u.left-r-6;let g;d+r<=window.innerWidth-l?g=d:f>=l?g=f:g=Math.max(l,window.innerWidth-r-l);let p=u.top;p+c>window.innerHeight-8&&(p=window.innerHeight-c-8),p=Math.max(8,p),o.style.top=p+"px",o.style.left=g+"px";const h=o.querySelector(".cat-picker-item.current");h&&h.scrollIntoView({block:"nearest"}),o.addEventListener("click",v=>{const b=v.target.closest(".cat-picker-item");b&&(selectCategory(t,Number(b.dataset.catId)),closeCategoryPicker())}),_catPickerEscHandler=v=>{v.key==="Escape"&&(v.stopPropagation(),closeCategoryPicker())},document.addEventListener("keydown",_catPickerEscHandler,!0)}function closeCategoryPicker(){document.getElementById("cat-picker")?.remove(),document.getElementById("cat-picker-backdrop")?.remove(),_catPickerEscHandler&&(document.removeEventListener("keydown",_catPickerEscHandler,!0),_catPickerEscHandler=null)}function selectCategory(e,t){const s=state.allPatches.find(a=>a.id===e);if(!s)return;const n=PATCH_CATEGORIES.get(t)??`Unknown (${t})`;s.categoryId=t,s.categoryName=n,s.bytes[16]=t;for(const a of state.files){const o=a.patches.find(i=>i.id===e);if(o){o.categoryId=t,o.categoryName=n,o.bytes[16]=t;break}}renderPatchListOnly()}function escHtml(e){return String(e).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function escAttr(e){return escHtml(e)}document.addEventListener("keydown",e=>{e.key==="Escape"&&state.activeModal&&closeModal()}),render();</script>
+</body>
+</html>
